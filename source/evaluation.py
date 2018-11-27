@@ -4,7 +4,12 @@ import numpy as np
 
 
 
-class FitnessEvaluator(object):
+class FitnessFunction(object):
+	'''
+	FitnessFunction takes a kinetic model, and builds a fitness function around it, which can be used by
+	the genetic algorithm class.
+
+	'''
 
 	def __init__(self, config, kinetic_model):
 
@@ -131,7 +136,7 @@ class FitnessEvaluator(object):
 			return total_error
 
 	def get_phenotype(self, genotype):
-		'''convert all genes to param values using geno_to_pheno function'''
+		# convert all genes to param values using geno_to_pheno function
 
 		phenotype = np.empty(self.genome_size)
 		for index, gene in enumerate(genotype):
@@ -140,7 +145,7 @@ class FitnessEvaluator(object):
 		return phenotype
 
 	def make_phenotype_transform(self):
-		''' create a list that maps each parameter to an index in the parameter array'''
+		# create a list that maps each parameter to an index in the parameter array
 
 		phenotype_transform = [None] * self.genome_size
 

@@ -15,15 +15,23 @@ DATADIR = os.path.join(BASE_DIR, 'data')
 PARAMOUTDIR = os.path.join(OUTDIR, 'saved_parameters')
 PLOTOUTDIR = os.path.join(OUTDIR, 'plot_out')
 
+# Initialize the reactions
+REACTIONS_FILE = os.path.join(
+	DATADIR, 'aa_transport_reactions.json'
+	)
+
+with open(REACTIONS_FILE, 'r') as f:
+	ALL_REACTIONS = json.loads(f.read())
+
 # data
 WCM_SIMDATA_FILE = os.path.join(DATADIR, 'wcm_sim_data.json')
 CONDITIONS_FILE = os.path.join(DATADIR, 'conditions.json')
 
-with open(WCM_SIMDATA_FILE, "r") as f:
+with open(WCM_SIMDATA_FILE, 'r') as f:
 	wcm_sim_out = json.loads(f.read())
 
 
-# Piperno and Oxender 1968 target data TODO -- put in conditions.
+# Piperno and Oxender 1968 target data
 GLYCINE_DATA = os.path.join(
 	DATADIR, 'piperno_oxender_1968', 'glycine.csv'
 	)
@@ -95,30 +103,3 @@ with open(PHENYLALANINE_DATA) as target_file:
 
 		target = {'substrate_concentration': conc, 'flux': flux}
 		target_definition['PHE[p]'].append(target)
-
-# Initialize the reactions
-# load all reactions from file
-REACTIONS_FILE = os.path.join(
-	DATADIR, 'aa_transport_reactions.json'
-	# 'aa_transport_reactions_curated.json'
-	)
-
-with open(REACTIONS_FILE, "r") as f:
-	ALL_REACTIONS = json.loads(f.read())
-
-# # TODO -- this should replace REACTIONS_FILE entirely
-# REACTIONS_FILE_RAW = os.path.join(
-# 	os.path.split(__file__)[0],
-# 	'data/aa_transport_reactions.json'
-# 	)
-#
-# with open(REACTIONS_FILE_RAW, "r") as f:
-# 	ALL_REACTIONS_RAW = json.loads(f.read())
-
-# define parameter for each kinetic rate law
-REACTION_PARAMS = {
-	'uniport': ['kcat', 'km'],
-	'uniport_reversible': ['kcat_f', 'kcat_r', 'km_A1', 'km_A2'],
-	'symport': ['kcat', 'km_A', 'km_B'],
-	'symport_reversible': ['kcat_f', 'kcat_r', 'km_A1', 'km_A2', 'km_B1', 'km_B2'],
-	}

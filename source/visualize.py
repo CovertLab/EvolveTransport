@@ -12,6 +12,11 @@ from source.kinetic_flux_model import KineticFluxModel
 
 
 class Visualize(object):
+	'''
+	Visualize class for plotting the evolution of parameters by a genetic algorithm.
+
+	To initialize this object, pass a config and a fitness function constructed in evaluation.py
+	'''
 
 	def __init__(self, config, fitness_function):
 
@@ -34,7 +39,6 @@ class Visualize(object):
 
 		# for michaelis-menten plot
 		self.transport_configuration = fitness_function.kinetic_model.transport_configuration
-
 
 	# Analyses -- TODO -- this should not be part of plots
 	def parameter_analysis(self, final_population, final_fitness):
@@ -83,10 +87,9 @@ class Visualize(object):
 		if not os.path.exists(self.out_dir):
 			os.mkdir(self.out_dir)
 		fig_name = ('param_space_' + self.replicate_id)
-		plt.savefig(os.path.join(self.out_dir ,fig_name))
+		plt.savefig(os.path.join(self.out_dir, fig_name))
 
 		print('parameters plot saved')
-
 
 	# Plots
 	def conditions(self, phenotype, conditions):
@@ -95,7 +98,6 @@ class Visualize(object):
 		rows = 4
 		n_conditions = len(conditions)
 
-		# plt.figure(figsize=(5*n_conditions + 2, 2*rows + 1))
 		plt.figure(figsize=(5 * n_conditions + 2, 2 * rows + 1))
 
 		for condition_index, cond in enumerate(conditions):
@@ -117,20 +119,19 @@ class Visualize(object):
 			condition_targets = cond['targets']
 
 			row_index = 0
-			for type, targets in condition_targets.iteritems():
+			for target_type, targets in condition_targets.iteritems():
 
-				if type == 'exchange_fluxes':
+				if target_type == 'exchange_fluxes':
 					for molecule, target_flux in targets.iteritems():
 						exchange_flux = exchange_fluxes_timeseries[molecule]
 						concentration = concentrations_timeseries[molecule]
 
-						plt.subplot(rows, n_conditions, n_conditions * row_index + condition_index + 1) # (n_conditions, columns, columns * condition_index + index)
-						plt.plot(time_timeseries, exchange_flux, 'g', label = ('ex flux, avg = %.2e' % np.mean(exchange_flux)))
-						plt.axhline(y = target_flux, linestyle='--', color='r', label = ('target = %.2e' % target_flux))
+						plt.subplot(rows, n_conditions, n_conditions * row_index + condition_index + 1)  # (n_conditions, columns, columns * condition_index + index)
+						plt.plot(time_timeseries, exchange_flux, 'g', label=('ex flux, avg = %.2e' % np.mean(exchange_flux)))
+						plt.axhline(y=target_flux, linestyle='--', color='r', label=('target = %.2e' % target_flux))
 						plt.title('cond_' + str(condition_index) + ' ex_flux target: ' + molecule, y=1.15)
 						plt.ylabel('flux (M/s)')
 						plt.xlabel('t (s)')
-						# plt.yscale('log')
 						plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 						row_index += 1
@@ -143,35 +144,14 @@ class Visualize(object):
 
 						row_index += 1
 
-						# # TODO -- remove this from here! piperno-specific
-						# if PIPERNO:
-						#
-						# 	# import ipdb;
-						# 	# ipdb.set_trace()
-						#
-						# 	if molecule == 'GLY[p]':
-						# 		marker = 'g^'
-						# 	elif molecule == 'ILE[p]':
-						# 		marker = 'gs'
-						# 	elif molecule == 'MET[p]':
-						# 		marker = 'go'
-						# 	elif molecule == 'PHE[p]':
-						# 		marker = 'gP'
-						#
-						# 	# set_concentrations['GLY[p]']
-						# 	plt.subplot(2, 4, 4 * ( 2 -1) + 1)
-						# 	plt.plot(set_concentrations[molecule], - exchange_flux[0], marker, markersize=6)
-
-
-
-				if type == 'reaction_fluxes':
+				if target_type == 'reaction_fluxes':
 
 					for reaction, target_flux in targets.iteritems():
 						reaction_flux = reaction_fluxes_timeseries[reaction]
 
 						plt.subplot(rows, n_conditions, n_conditions * row_index + condition_index + 1)
 						plt.plot(time_timeseries, reaction_flux, 'b', label='reaction flux')
-						plt.axhline(y=target_flux, linestyle='--', color='r', label = ('target flux = %.2e' % target_flux))
+						plt.axhline(y=target_flux, linestyle='--', color='r', label=('target flux = %.2e' % target_flux))
 						plt.title('cond_' + str(condition_index) + ' rxn_flux target: ' + reaction, y=1.15)
 						plt.ylabel('flux (M/s)')
 						plt.xlabel('t (s)')
@@ -192,7 +172,7 @@ class Visualize(object):
 						row_index += 1
 
 
-				if type == 'parameters':
+				if target_type == 'parameters':
 
 					# conc_range = PARAM_RANGES['km']
 					n_sample_concentrations = 1000000
@@ -211,11 +191,13 @@ class Visualize(object):
 						param_indices[reaction_id] = self.parameter_indices[reaction_id]
 						kinetic_model = KineticFluxModel(reaction, param_indices)
 
-						A1 = reaction[reaction_id]['substrates']['A1']
+						# TODO -- fix this to match new parameter indices
+						import ipdb; ipdb.set_trace
+						a1 = reaction[reaction_id]['substrates']['A1']
 						concentrations = self.kinetic_model.initialize_state()
 
 						for idx, conc in enumerate(conc_range):
-							concentrations[A1] = conc
+							concentrations[a1] = conc
 							reaction_fluxes, exchange_fluxes = kinetic_model.get_fluxes(phenotype, concentrations)
 							flux_range[idx] = reaction_fluxes[reaction_id]
 
@@ -227,7 +209,7 @@ class Visualize(object):
 						for param, value in parameters.iteritems():
 							if 'kcat' in param:
 								transporter_id = reaction[reaction_id]['transporter']
-								t_conc = concentrations[transporter_id[0]] # uses concentration of first transporter
+								t_conc = concentrations[transporter_id[0]]  # uses concentration of first transporter
 								vmax = value * t_conc
 								plt.axhline(
 									y=vmax, linestyle='--', color='r',
@@ -239,7 +221,7 @@ class Visualize(object):
 								plt.axvline(x=value, linestyle='--', color='k', label=('target km = ' + str(value)))
 
 						plt.xscale('log')
-						plt.xlabel(A1 + ' concentration (M)')
+						plt.xlabel(a1 + ' concentration (M)')
 						plt.ylabel('flux (M/s)')
 						plt.title('cond_' + str(condition_index) + ' param targets, ' + reaction_id, y=1.15)
 						# plt.title(reaction_id)
@@ -329,8 +311,8 @@ class Visualize(object):
 					top=False,  # ticks along the top edge are off
 					labelbottom=False)  # labels along the bottom edge are off
 			else:
-				plt.ylabel("Conc (M)")
-				plt.xlabel("Time (s)")
+				plt.ylabel('Conc (M)')
+				plt.xlabel('Time (s)')
 			index += 1
 
 		# plot reaction fluxes over time
@@ -347,8 +329,8 @@ class Visualize(object):
 					top=False,  # ticks along the top edge are off
 					labelbottom=False)  # labels along the bottom edge are off
 			else:
-				plt.ylabel("Flux (M/s)")
-				plt.xlabel("Time (s)")
+				plt.ylabel('Flux (M/s)')
+				plt.xlabel('Time (s)')
 			index += 1
 
 		if 'TARGET_FLUXES' in globals():
@@ -367,8 +349,8 @@ class Visualize(object):
 							top=False,  # ticks along the top edge are off
 							labelbottom=False)  # labels along the bottom edge are off
 					else:
-						plt.ylabel("Flux (M/s)")
-						plt.xlabel("Time (s)")
+						plt.ylabel('Flux (M/s)')
+						plt.xlabel('Time (s)')
 					index += 1
 
 		# plot parameters
@@ -398,7 +380,7 @@ class Visualize(object):
 							info = (transporter + ': km_' + param)
 							plt.title(info)
 							plt.ylim(0, 1)
-							plt.xscale("log")
+							plt.xscale('log')
 							plt.tick_params(
 								left=False,
 								right=False,
@@ -426,7 +408,7 @@ class Visualize(object):
 						info = (rxn + ': ' + param_type)
 						plt.title(info)
 						plt.ylim(0, 1)
-						plt.xscale("log")
+						plt.xscale('log')
 						plt.tick_params(
 							left=False,
 							right=False,
@@ -458,7 +440,7 @@ class Visualize(object):
 		n_vary = 10
 		n_samples = 100
 		n_rxns = len(self.parameter_indices)
-		rows = 2*n_rxns + 2 # extra row for each reaction header
+		rows = 2*n_rxns + 2  # extra row for each reaction header
 
 		cmap = plt.cm.get_cmap('Spectral')
 		colors = [cmap(float(idx) / n_vary) for idx in range(n_vary)]
@@ -508,9 +490,7 @@ class Visualize(object):
 							idx = self.parameter_indices[rxn][trp][par]
 							all_parameters[idx] = par_type
 
-
-
-		plt.figure(figsize=(6*columns,3*rows))
+		plt.figure(figsize=(6*columns, 3*rows))
 		plot_number = 1
 		row_number = 0
 		for reaction_id, specs in self.reactions.iteritems():
@@ -518,15 +498,15 @@ class Visualize(object):
 			stoich = specs['stoichiometry']
 			parameters = self.parameter_indices[reaction_id]
 
-			# TODO -- set A1 to amino acid... or show all?
+			# TODO -- set a1 to amino acid... or show all?
 			reactants = [mol for mol, coeff in stoich.iteritems() if coeff < 0]
 			products = [mol for mol, coeff in stoich.iteritems() if coeff > 0]
-			A1 = reactants[0]
+			a1 = reactants[0]
 
 			# get cofactor
-			B1 = None
+			b1 = None
 			if len(reactants) > 1:
-				B1 = reactants[1]
+				b1 = reactants[1]
 
 			# plot info in whole row
 			param_values = {}
@@ -558,7 +538,7 @@ class Visualize(object):
 
 				flux_values = np.empty_like(conc_values)
 				for idx, conc in enumerate(conc_values):
-					concentrations[A1] = conc
+					concentrations[a1] = conc
 					reaction_fluxes, exchange_fluxes = self.kinetic_model.get_fluxes(all_parameters, concentrations)
 					flux_values[idx] = reaction_fluxes[reaction_id]
 
@@ -568,7 +548,7 @@ class Visualize(object):
 
 				# plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 				plt.xscale('log')
-				plt.xlabel(A1 + ' concentration (M)')
+				plt.xlabel(a1 + ' concentration (M)')
 				plt.ylabel('flux (M/s)')
 				plt.title('transporter: %s' % transporter)
 
@@ -586,21 +566,21 @@ class Visualize(object):
 						flux_values = np.empty_like(conc_values)
 						for idx, conc in enumerate(conc_values):
 
-							concentrations[A1] = conc
+							concentrations[a1] = conc
 							reaction_fluxes, exchange_fluxes = self.kinetic_model.get_fluxes(all_parameters, concentrations)
 							flux_values[idx] = reaction_fluxes[reaction_id]
 
 						# plot M-M curve for this reaction
 						plt.plot(conc_values, flux_values,
-										color = colors[index],
-										label = ('conc = %.2e' % (transporter_conc)),
-										)
+												color = colors[index],
+												label = ('conc = %.2e' % (transporter_conc)),
+												)
 
 					plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 					plt.xscale('log')
-					plt.xlabel(A1 + ' concentration (M)')
+					plt.xlabel(a1 + ' concentration (M)')
 					plt.ylabel('flux (M/s)')
-					plt.title('transporter: %s' % (transporter))
+					plt.title('transporter: %s' % transporter)
 
 					plot_number += 1
 
@@ -610,15 +590,15 @@ class Visualize(object):
 					conc_values = np.logspace(-8, 1, num=n_samples, endpoint=True, base=10)
 					cofactor_concs = np.logspace(-8, 1, num=n_vary, endpoint=True, base=10)
 
-					if B1 is not None:
+					if b1 is not None:
 						plt.subplot(rows, columns, plot_number)
 						for index, cofactor_conc in enumerate(cofactor_concs):
-							concentrations[B1] = cofactor_conc
+							concentrations[b1] = cofactor_conc
 
 							flux_values = np.empty_like(conc_values)
 							for idx, conc in enumerate(conc_values):
 
-								concentrations[A1] = conc
+								concentrations[a1] = conc
 								reaction_fluxes, exchange_fluxes = self.kinetic_model.get_fluxes(all_parameters, concentrations)
 								flux_values[idx] = reaction_fluxes[reaction_id]
 
@@ -630,9 +610,9 @@ class Visualize(object):
 
 						plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 						plt.xscale('log')
-						plt.xlabel(A1 + ' concentration (M)')
+						plt.xlabel(a1 + ' concentration (M)')
 						plt.ylabel('flux (M/s)')
-						plt.title('cofactor: %s' % B1)
+						plt.title('cofactor: %s' % b1)
 
 					plot_number += 1
 
@@ -657,19 +637,19 @@ class Visualize(object):
 							flux_values = np.empty_like(conc_values)
 							for idx, conc in enumerate(conc_values):
 
-								concentrations[A1] = conc
+								concentrations[a1] = conc
 								reaction_fluxes, exchange_fluxes = self.kinetic_model.get_fluxes(all_parameters, concentrations)
 								flux_values[idx] = reaction_fluxes[reaction_id]
 
 							# plot M-M curve for this reaction
 							plt.plot(conc_values, flux_values,
-											color = colors[index],
-											label = ('conc = %.2e' % (competitor_conc)),
-											)
+													color = colors[index],
+													label = ('conc = %.2e' % (competitor_conc)),
+													)
 
 						plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 						plt.xscale('log')
-						plt.xlabel(A1 + ' concentration (M)')
+						plt.xlabel(a1 + ' concentration (M)')
 						plt.ylabel('flux (M/s)')
 						plt.title('competitor: %s' % (competitor))
 
@@ -677,10 +657,7 @@ class Visualize(object):
 
 				row_number += 1
 
-			# import ipdb; ipdb.set_trace()
-
 			plot_number = row_number * columns + 1
-
 
 		plt.subplots_adjust(hspace=0.5, wspace=1.5)
 
@@ -703,14 +680,14 @@ class Visualize(object):
 
 		# define shown generations for fitness distribution plots
 		if n_saved_gens >= max_shown_gens:
-			nth_gen_shown = int(n_saved_gens /max_shown_gens)
+			nth_gen_shown = int(n_saved_gens / max_shown_gens)
 		else:
 			nth_gen_shown = 1
 		shown_gens = [gen for gen in xrange(0, n_saved_gens, nth_gen_shown)]
 
 		# make labels
 		if n_saved_gens >= max_gens_labels:
-			nth_gen_label = int(n_saved_gens /max_gens_labels)
+			nth_gen_label = int(n_saved_gens / max_gens_labels)
 		else:
 			nth_gen_label = 1
 		labeled_gens = [gen for gen in xrange(0, n_saved_gens, nth_gen_label)]
@@ -742,7 +719,7 @@ class Visualize(object):
 		# plot histograms of fitness over several generations
 		plt.subplot(3, 2, 3)
 		cmap = plt.cm.get_cmap('Spectral')
-		colors = [cmap(float(idx ) /len(hist_fit_by_gen)) for idx in range(len(hist_fit_by_gen))]
+		colors = [cmap(float(idx) / len(hist_fit_by_gen)) for idx in range(len(hist_fit_by_gen))]
 
 		plt.hist(hist_fit_by_gen, bins=n_bins, color=colors, label=gen_label)
 		plt.title('Fitness distribution for population with n=' + str(population_size))
@@ -753,7 +730,7 @@ class Visualize(object):
 		# plot relative fitness in a stacked bar graph for all gens in shown_gens
 		plt.subplot(3, 2, 2)
 		cmap = plt.cm.get_cmap('Spectral')
-		colors = [cmap(float(idx ) /len(shown_gens)) for idx in range(len(shown_gens))]
+		colors = [cmap(float(idx) / len(shown_gens)) for idx in range(len(shown_gens))]
 
 		for idx, selection_fitness in enumerate(selection_fitness_ordered_gens):
 			cum_fitness = np.cumsum(selection_fitness)
@@ -772,7 +749,7 @@ class Visualize(object):
 		# plot error for a error-ordered population at each gen in shown_gens
 		plt.subplot(3, 2, 4)
 		cmap = plt.cm.get_cmap('Spectral')
-		colors = [cmap(float(idx ) /len(shown_gens)) for idx in range(len(shown_gens))]
+		colors = [cmap(float(idx) / len(shown_gens)) for idx in range(len(shown_gens))]
 
 		for idx, gen in enumerate(error_ordered_gens):
 			if shown_gens[idx] in labeled_gens:
@@ -785,7 +762,6 @@ class Visualize(object):
 		plt.xlabel('Individuals, ordered by rank (least to most error)')
 		# plt.yscale('log')
 		plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
 
 		if penality_diagnosis:
 			total_error = [diagnosis['total'] for generation, diagnosis in enumerate(penality_diagnosis)]
@@ -813,14 +789,14 @@ class Visualize(object):
 			plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 			plt.ylabel('Error contribution')
 			plt.xlabel('Generation')
-		# plt.yscale("log")
+		# plt.yscale('log')
 
 		plt.subplots_adjust(hspace=0.5, wspace=1.0)
 
 		if not os.path.exists(self.out_dir):
 			os.mkdir(self.out_dir)
 		fig_name = ('GA_' + self.replicate_id)
-		plt.savefig(os.path.join(self.out_dir ,fig_name), bbox_inches='tight') # format='pdf'
+		plt.savefig(os.path.join(self.out_dir, fig_name), bbox_inches='tight')  # format='pdf'
 
 		print('evolution plot saved')
 
@@ -842,7 +818,6 @@ class Visualize(object):
 		# 		([mutation['mutation'] for mutation in mutation_diagnosis if mutation['fitness_change' ] <0])
 		# 	# TODO -- learn labeled data (bad vs good directions)
 
-			# import ipdb; ipdb.set_trace()
 			# TODO -- fitness change needs some range for histogram to work
 
 			#

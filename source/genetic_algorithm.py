@@ -4,6 +4,10 @@ import numpy as np
 
 
 class GeneticAlgorithm(object):
+	'''
+	GeneticAlgorithm takes a config and fitness function, and evolves a population to maximize fitness.
+
+	'''
 
 	def __init__(self, config, fitness_function):
 
@@ -38,12 +42,8 @@ class GeneticAlgorithm(object):
 		self.saved_mutation_diagnosis = []
 
 	def initialize_population(self, population_size):
-		'''
-		fill the population dicitonary with {individual: [parameters]}
-		for each individual in the population
 
-		'''
-
+		# fill the population dicitonary with {individual: [parameters]}	for each individual in the population
 		population = {}
 		for ind in xrange(population_size):
 			population[ind] = self.initialize_genome()
@@ -108,7 +108,8 @@ class GeneticAlgorithm(object):
 				top_diagnosis = self.diagnosis[top_index]
 				saved_penality_diagnosis.append(top_diagnosis)
 
-			print('gen ' + str(generations) + ' fittest: ' + str(top_fit)) # TODO -- print error for error terms
+			# TODO -- print error for error terms
+			print('gen ' + str(generations) + ' fittest: ' + str(top_fit))
 
 			# repopulate based on fitness -- higher fitness gets higher selection
 			self.population = self.repopulate(self.population, self.fitness)
@@ -128,10 +129,9 @@ class GeneticAlgorithm(object):
 		return self.population, self.fitness, saved_error, saved_fitness, saved_diagnosis
 
 	def repopulate(self, population, fitness):
-		'''
-		population is a dictionary with {id: genome}
-		fitness is a dictionary with {id: fitness value}
-		'''
+
+		# population is a dictionary with {id: genome}
+		# fitness is a dictionary with {id: fitness value}
 
 		new_population = {}
 
@@ -187,10 +187,6 @@ class GeneticAlgorithm(object):
 
 			# enforce bounds on genome
 			if self.enforce_bounds:
-				# clip at bounds
-				# new_genome[new_genome >= 1.0] = 1.0
-				# new_genome[new_genome <= 0.0] = 0.0
-
 				# if parameter is not in range, initialize it randomly within range
 				out_of_range = np.where(np.logical_or(new_genome <= 0.0, new_genome >= 1.0))
 				new_genome[out_of_range] = np.random.uniform(0.0, 1.0)

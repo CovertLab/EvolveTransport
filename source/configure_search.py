@@ -7,7 +7,7 @@ import datetime
 import numpy as np
 
 from source.kinetic_flux_model import KineticFluxModel
-from source.evaluation import FitnessEvaluator
+from source.evaluation import FitnessFunction
 from source.genetic_algorithm import GeneticAlgorithm
 from source.visualize import Visualize
 
@@ -46,7 +46,7 @@ MUTATION_VARIANCE = 0.1  # 0.001 # 0.1 # TODO -- make this default, and allow ad
 PARAM_RANGES = {
 	'km': [
 		1e-9,  # 1e-9,  # units in M
-		1e0    # 1e1 units in M
+		1e1    # 1e1 units in M
 	],
 	'kcat': [
 		1e-2,  # gives average kcat of about 100 w/ upper kcat of 1e6
@@ -56,16 +56,16 @@ PARAM_RANGES = {
 
 # Set up conditions
 '''
-A condition is a dictionary that includes "initial_concentrations", "targets", "penalties" as keys. 
+A condition is a dictionary that includes 'initial_concentrations', 'targets', 'penalties' as keys. 
 Each of these is itself a dictionary. 
  
-"initial_concentrations" has {molecule: concentration}, and sets this conditions concentrations to those listed. 
+'initial_concentrations' has {molecule: concentration}, and sets this conditions concentrations to those listed. 
 If unlisted, it uses WCM concentrations.
  
-"targets" has these four sub dictionaries: "reaction_fluxes", "exchange_fluxes", "concentrations", "parameters", 
+'targets' has these four sub dictionaries: 'reaction_fluxes', 'exchange_fluxes', 'concentrations', 'parameters', 
 each which has a reaction, molcule, or parameter id as entries. 
 
-"penalities" has the same four entries as "targets", but with each having a single penalty term.
+'penalities' has the same four entries as 'targets', but with each having a single penalty term.
   
 '''
 
@@ -73,7 +73,7 @@ each which has a reaction, molcule, or parameter id as entries.
 TEST_SHARED_TRANSPORTER = False
 TEST_LEUCINE = True
 
-with open(data.CONDITIONS_FILE, "r") as f:
+with open(data.CONDITIONS_FILE, 'r') as f:
 	conditions_dict = json.loads(f.read())
 
 	INCLUDE_REACTIONS = [
@@ -96,30 +96,30 @@ if TEST_LEUCINE:
 		}
 
 	C1 = {
-		"initial_concentrations": {
+		'initial_concentrations': {
 			'LEU[p]': 1e-4,
 		},
-		"targets": {
-			"exchange_fluxes": {
+		'targets': {
+			'exchange_fluxes': {
 				'LEU[p]': 0.5e-5,
 			},
 		},
-		"penalties": {
-			"exchange_fluxes": 10.0
+		'penalties': {
+			'exchange_fluxes': 10.0
 		}
 	}
 
 	C2 = {
-		"initial_concentrations": {
+		'initial_concentrations': {
 			'LEU[p]': 1e-3,
 		},
-		"targets": {
-			"exchange_fluxes": {
+		'targets': {
+			'exchange_fluxes': {
 				'LEU[p]': 0.5e-4,
 			},
 		},
-		"penalties": {
-			"exchange_fluxes": 10.0
+		'penalties': {
+			'exchange_fluxes': 10.0
 		}
 	}
 
@@ -135,33 +135,33 @@ if TEST_SHARED_TRANSPORTER:
 		}
 
 	C1 = {
-		"initial_concentrations": {
+		'initial_concentrations': {
 			'GLY[p]': 1e-4,
 			'L-ALPHA-ALANINE[p]': 1e-5,  # lower
 		},
-		"targets": {
-			"reaction_fluxes": {
+		'targets': {
+			'reaction_fluxes': {
 				'TRANS-RXN-62B': 0.5e-5,
 				'RXN0-5202': 0.5e-5,
 			},
 		},
-		"penalties": {
-		  "reaction_fluxes": 10.0
+		'penalties': {
+		  'reaction_fluxes': 10.0
 		}
 	}
 	C2 = {
-		"initial_concentrations": {
+		'initial_concentrations': {
 			'GLY[p]': 1e-1,
 			'L-ALPHA-ALANINE[p]': 1e-3,  # higher
 		},
-		"targets": {
-			"reaction_fluxes": {
+		'targets': {
+			'reaction_fluxes': {
 				'TRANS-RXN-62B': 1e-4,
 				'RXN0-5202': 1e-3,
 			},
 		},
-		"penalties": {
-			"reaction_fluxes": 10.0
+		'penalties': {
+			'reaction_fluxes': 10.0
 		}
 	}
 
@@ -244,7 +244,7 @@ class TransportEstimation(object):
 		self.kinetic_model = KineticFluxModel(self.kinetic_model_config, self.reactions)
 
 		# configure the fitness function, passing in the kinetic model
-		self.fitness_function = FitnessEvaluator(self.evaluator_config, self.kinetic_model)
+		self.fitness_function = FitnessFunction(self.evaluator_config, self.kinetic_model)
 
 		# configure the genetic algorithm, passing in a fitness function
 		self.genetic_algorithm = GeneticAlgorithm(self.ga_config, self.fitness_function)
@@ -254,11 +254,6 @@ class TransportEstimation(object):
 
 		# run the genetic algorithm
 		final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis = self.genetic_algorithm.evolve()
-
-
-
-
-
 
 
 		# Visualization and Analysis
@@ -297,8 +292,8 @@ class TransportEstimation(object):
 		if not replicate_nums:
 			replicate_num = 1
 		else:
-			replicate_nums = [name.replace(name[0:name.find("__")+2], '') for name in replicate_nums]
-			replicate_nums = [name.replace(name[name.find("."):], '') for name in replicate_nums]
+			replicate_nums = [name.replace(name[0:name.find('__')+2], '') for name in replicate_nums]
+			replicate_nums = [name.replace(name[name.find('.'):], '') for name in replicate_nums]
 			replicate_nums = [int(name) for name in replicate_nums]
 			replicate_num = max(replicate_nums) + 1
 
@@ -307,5 +302,5 @@ class TransportEstimation(object):
 		return replicate_id
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
 	TransportEstimation().main()
