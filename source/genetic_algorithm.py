@@ -129,9 +129,14 @@ class GeneticAlgorithm(object):
 		return self.population, self.fitness, saved_error, saved_fitness, saved_diagnosis
 
 	def repopulate(self, population, fitness):
+		'''
+		Args:
+			population: a dictionary with {id: genome}
+			fitness: a dictionary with {id: fitness value}
 
-		# population is a dictionary with {id: genome}
-		# fitness is a dictionary with {id: fitness value}
+		Returns:
+			new_population: a dictionary, same as population, but with new genomes
+		'''
 
 		new_population = {}
 
@@ -192,8 +197,6 @@ class GeneticAlgorithm(object):
 				new_genome[out_of_range] = np.random.uniform(0.0, 1.0)
 
 				enforce_bounds = float(len(out_of_range[0])) / len(new_genome)
-
-			# TODO -- check if mutation improves objective. Accept improvements. Take reductions with p(d_obj)
 
 			# genome_fitness
 			new_genome_error = self.fitness_function.evaluate(new_genome)

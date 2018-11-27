@@ -28,15 +28,27 @@ class KineticFluxModel(object):
 		self.set_baseline = config.get('set_baseline', None)
 
 		self.reactions = reactions
+
 		self.parameter_indices, self.transport_configuration, self.n_parameters = self.make_parameter_indices(reactions)
-
 		self.rate_laws = self.make_rate_laws(self.reactions, self.transport_configuration, self.parameter_indices)
-
 		self.baseline_concentrations = self.initialize_state(self.set_baseline)
 
 	def make_parameter_indices(self, reactions):
+		'''
 
-		# initialize parameter dictionary for all reactions and transporters
+		Args:
+			reactions: A dictionary with all reactions, passed into object in init
+
+
+		Returns:
+			transport_configuration: a dictionary with partition and reaction_cofactor entries for each reaction
+			parameter_indices: a dictionary with entries for each reaction and transporter.
+								each parameter is assigned an int index value, used for mapping from genome.
+			parameter_index: the final number of parameters, used to initialize a genome as an array of this length
+
+		'''
+
+		# initialize dictionaries
 		transport_configuration = {}
 		parameter_indices = {}
 		parameter_index = 0
@@ -149,7 +161,6 @@ class KineticFluxModel(object):
 				)
 
 				# save the rate law for each transporter in this reaction
-				# reactions[reaction]['rate_laws'][transporter] = rate_law
 				rate_laws[reaction][transporter] = rate_law
 
 		return rate_laws
@@ -174,7 +185,8 @@ class KineticFluxModel(object):
 			partition: a list of lists. each sublist is the set of cofactors for a given partition.
 				[[C1, C2],[C3, C4], [C5]
 
-		Returns: a kinetic rate law for the reaction, with arguments for concentrations and parameters,
+		Returns:
+			a kinetic rate law for the reaction, with arguments for concentrations and parameters,
 			and returns flux.
 
 		'''
@@ -260,7 +272,6 @@ class KineticFluxModel(object):
 		timeline = np.arange(0, run_for + self.time_step, self.time_step)
 
 		# initialize concentrations
-		# concentrations = self.initialize_state()
 		concentrations = self.baseline_concentrations.copy()
 		reaction_fluxes, exchange_fluxes = self.get_fluxes(parameters, concentrations)
 
@@ -318,7 +329,6 @@ class KineticFluxModel(object):
 
 		# get all substrates in REACTIONS that are not yet set
 		for rxn, specs in self.reactions.iteritems():
-			# substrates = specs['substrates'].values()
 			substrates = specs['stoichiometry'].keys()
 			transporters = specs['transporters']
 
