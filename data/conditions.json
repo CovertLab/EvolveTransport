@@ -1,0 +1,40 @@
+{
+	"C1": {
+		"initial_concentrations": {
+		},
+		"targets": {
+			"reaction_fluxes": {
+				"TRANS-RXN0-569-LEU//LEU.9.": 0.000704834123
+			}
+		},
+		"penalties": {
+			"reaction_fluxes": 10.0
+		}
+	},
+	"C2": {
+		"initial_concentrations": {
+			"LEU[c]": 1e-1
+		},
+		"targets": {
+			"reaction_fluxes": {
+				"TRANS-RXN0-569-LEU//LEU.9.": 0.0012815165873
+			}
+		},
+		"penalties": {
+			"reaction_fluxes": 10.0
+		}
+	},
+	"C3": {
+		"initial_concentrations": {
+			"TRP[p]": 1e-1
+		},
+		"targets": {
+			"reaction_fluxes": {
+				"TRANS-RXN0-265-TRP//TRP.9.": 0.0012815165873
+			}
+		},
+		"penalties": {
+			"reaction_fluxes": 10.0
+		}
+	}
+}
