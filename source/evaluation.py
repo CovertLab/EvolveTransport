@@ -21,7 +21,6 @@ class FitnessEvaluator(object):
 		# make mapping from genotype to phenotype
 		self.phenotype_transform = self.make_phenotype_transform()
 
-
 	def evaluate(self, genotype, diagnose_error=False):
 
 		phenotype = self.get_phenotype(genotype)
@@ -87,7 +86,8 @@ class FitnessEvaluator(object):
 					for param_id, parameter_target in parameters.iteritems():
 						if parameter_target:
 
-							import ipdb; ipdb.set_trace()
+							import ipdb
+							ipdb.set_trace()
 							# TODO -- make sure param_indices points correctly
 							index = self.parameter_indices[rxn][param_id]
 							# parameter_value = phenotype[index]
@@ -118,12 +118,11 @@ class FitnessEvaluator(object):
 					molecule_flux = ss_exchange_fluxes[molecule]
 
 					# penalize for distance from steady state (flux = 0)
-					error_terms['steady_state'] = penalties['steady_state'] * (molecule_flux) ** 2
+					error_terms['steady_state'] = penalties['steady_state'] * molecule_flux ** 2
 					total_error += error_terms['steady_state']
 
-
 			if diagnose_error:
-				diagnosis[number] = {term : error_terms[term] for term in penalties.keys()}
+				diagnosis[number] = {term: error_terms[term] for term in penalties.keys()}
 
 		if diagnose_error:
 			diagnosis['total'] = total_error
@@ -157,13 +156,13 @@ class FitnessEvaluator(object):
 							g_to_p = self.make_genotype_to_phenotype(bounds[0], bounds[1])
 							p_to_g = self.make_phenotype_to_genotype(bounds[0], bounds[1])
 
-							map = {
+							mapping = {
 								'bounds': bounds,
 								'geno_to_pheno': g_to_p,
 								'pheno_to_geno': p_to_g,
 							}
 
-							phenotype_transform[idx] = map
+							phenotype_transform[idx] = mapping
 
 					# kcats (one at a time)
 					else:
@@ -173,13 +172,13 @@ class FitnessEvaluator(object):
 						g_to_p = self.make_genotype_to_phenotype(bounds[0], bounds[1])
 						p_to_g = self.make_phenotype_to_genotype(bounds[0], bounds[1])
 
-						map = {
+						mapping = {
 							'bounds': bounds,
 							'geno_to_pheno': g_to_p,
 							'pheno_to_geno': p_to_g,
 						}
 
-						phenotype_transform[indices] = map
+						phenotype_transform[indices] = mapping
 
 		return phenotype_transform
 
@@ -188,7 +187,7 @@ class FitnessEvaluator(object):
 		b = max_phenotype / min_phenotype
 
 		def p_to_g(x):
-			return (np.log(x / a) / np.log(b))
+			return np.log(x / a) / np.log(b)
 
 		return p_to_g
 
@@ -197,6 +196,6 @@ class FitnessEvaluator(object):
 		b = max_phenotype / min_phenotype
 
 		def g_to_p(x):
-			return (a * b ** (x))
+			return a * b ** x
 
 		return g_to_p

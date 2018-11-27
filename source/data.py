@@ -49,12 +49,12 @@ with open(GLYCINE_DATA) as target_file:
 	next_line = next(reader)
 
 	for row in reader:
-		conc = float(row[0]) # in uM
-		flux = float(row[1]) # in umol AA/ 30 s/ g wet cell
-		conc = conc * 1e-6 # convert to M
-		flux = flux * 1e-6 * (1.0/30) * (1.0/0.3) # to mol AA / s / g dry cell mass
+		conc = float(row[0])  # in uM
+		flux = float(row[1])  # in umol AA/ 30 s/ g wet cell
+		conc = conc * 1e-6  # convert to M
+		flux = flux * 1e-6 * (1.0/30) * (1.0/0.3)  # to mol AA / s / g dry cell mass
 
-		target = {'substrate_concentration' : conc, 'flux' : flux}
+		target = {'substrate_concentration': conc, 'flux': flux}
 		target_definition['GLY[p]'].append(target)
 
 with open(ISOLEUCINE_DATA) as target_file:
@@ -62,10 +62,10 @@ with open(ISOLEUCINE_DATA) as target_file:
 	next_line = next(reader)
 
 	for row in reader:
-		conc = float(row[0]) # in uM
-		flux = float(row[1]) # in umol AA/ 30 s/ g wet cell
-		conc = conc * 1e-6 # convert to M
-		flux = flux * 1e-6 * (1.0/30) * (1.0/0.3) # to mol AA / s / g dry cell mass
+		conc = float(row[0])  # in uM
+		flux = float(row[1])  # in umol AA/ 30 s/ g wet cell
+		conc = conc * 1e-6    # convert to M
+		flux = flux * 1e-6 * (1.0/30) * (1.0/0.3)  # to mol AA / s / g dry cell mass
 
 		target = {'substrate_concentration': conc, 'flux': flux}
 		target_definition['ILE[p]'].append(target)
@@ -75,10 +75,10 @@ with open(METHIONINE_DATA) as target_file:
 	next_line = next(reader)
 
 	for row in reader:
-		conc = float(row[0]) # in uM
-		flux = float(row[1]) # in umol AA/ 30 s/ g wet cell
-		conc = conc * 1e-6 # convert to M
-		flux = flux * 1e-6 * (1.0/30) * (1.0/0.3) # to mol AA / s / g dry cell mass
+		conc = float(row[0])  # in uM
+		flux = float(row[1])  # in umol AA/ 30 s/ g wet cell
+		conc = conc * 1e-6    # convert to M
+		flux = flux * 1e-6 * (1.0/30) * (1.0/0.3)  # to mol AA / s / g dry cell mass
 
 		target = {'substrate_concentration': conc, 'flux': flux}
 		target_definition['MET[p]'].append(target)
@@ -88,18 +88,18 @@ with open(PHENYLALANINE_DATA) as target_file:
 	next_line = next(reader)
 
 	for row in reader:
-		conc = float(row[0]) # in uM
-		flux = float(row[1]) # in umol AA/ 30 s/ g wet cell
-		conc = conc * 1e-6 # convert to M
-		flux = flux * 1e-6 * (1.0/30) * (1.0/0.3) # to mol AA / s / g dry cell mass
+		conc = float(row[0])  # in uM
+		flux = float(row[1])  # in umol AA/ 30 s/ g wet cell
+		conc = conc * 1e-6    # convert to M
+		flux = flux * 1e-6 * (1.0/30) * (1.0/0.3)  # to mol AA / s / g dry cell mass
 
 		target = {'substrate_concentration': conc, 'flux': flux}
 		target_definition['PHE[p]'].append(target)
 
-## Initialize the reactions
+# Initialize the reactions
 # load all reactions from file
 REACTIONS_FILE = os.path.join(
-	DATADIR,'aa_transport_reactions.json'
+	DATADIR, 'aa_transport_reactions.json'
 	# 'aa_transport_reactions_curated.json'
 	)
 
@@ -117,9 +117,8 @@ with open(REACTIONS_FILE, "r") as f:
 
 # define parameter for each kinetic rate law
 REACTION_PARAMS = {
-	'uniport' : ['kcat', 'km'],
-	'uniport_reversible' : ['kcat_f', 'kcat_r', 'km_A1', 'km_A2'],
-	'symport' : ['kcat', 'km_A', 'km_B'],
-	'symport_reversible' : ['kcat_f', 'kcat_r', 'km_A1', 'km_A2', 'km_B1', 'km_B2'],
+	'uniport': ['kcat', 'km'],
+	'uniport_reversible': ['kcat_f', 'kcat_r', 'km_A1', 'km_A2'],
+	'symport': ['kcat', 'km_A', 'km_B'],
+	'symport_reversible': ['kcat_f', 'kcat_r', 'km_A1', 'km_A2', 'km_B1', 'km_B2'],
 	}
-

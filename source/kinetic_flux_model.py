@@ -7,7 +7,6 @@ class KineticFluxModel(object):
 
 	def __init__(self, config, reactions):
 		'''
-
 		Args:
 			reactions: a dictionary with reaction ids assigned to subdictionary with a 'transporters' list,
 				stoichiometry, and reversibility
@@ -19,6 +18,7 @@ class KineticFluxModel(object):
 		rate_laws: a dict, with a key for each reaction id, and then subdictionaries with each reaction's transporters
 			and their rate law function. These rate laws are used directly from within this dictionary
 		'''
+
 		self.time_step = 0.1
 		self.avogadro = constants.Avogadro
 
@@ -76,7 +76,7 @@ class KineticFluxModel(object):
 
 				# get competition for this transporter from other reactions
 				competing_reactions = [rxn for rxn, specs2 in reactions.iteritems() if
-									   (rxn is not reaction) and (transporter in specs2['transporters'])]
+						(rxn is not reaction) and (transporter in specs2['transporters'])]
 
 				competitors = []
 				for reaction2 in competing_reactions:
@@ -119,10 +119,10 @@ class KineticFluxModel(object):
 		return parameter_indices, transport_configuration, parameter_index
 
 
-	## Make rate laws
+	# Make rate laws
 	def make_rate_laws(self, reactions, transport_configuration, parameter_indices):
 
-		rate_laws = {reaction : {} for reaction, specs in reactions.iteritems()}
+		rate_laws = {reaction: {} for reaction, specs in reactions.iteritems()}
 
 		# make rate law for each reaction
 		for reaction, specs in reactions.iteritems():
@@ -235,8 +235,8 @@ class KineticFluxModel(object):
 	# use rate laws to calculate flux
 	def get_fluxes(self, parameters, concentrations):
 
-		reaction_fluxes = {rxn : 0.0 for rxn, specs in self.reactions.iteritems()}
-		exchange_fluxes = {mol : 0.0 for mol in concentrations.keys()}
+		reaction_fluxes = {rxn: 0.0 for rxn, specs in self.reactions.iteritems()}
+		exchange_fluxes = {mol: 0.0 for mol in concentrations.keys()}
 
 		# loop through all reactions, save reaction flux and molecule flux.
 		for rxn, specs in self.reactions.iteritems():

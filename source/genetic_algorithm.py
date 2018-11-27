@@ -3,7 +3,6 @@ from __future__ import absolute_import, division, print_function
 import numpy as np
 
 
-
 class GeneticAlgorithm(object):
 
 	def __init__(self, config, fitness_function):
@@ -32,7 +31,7 @@ class GeneticAlgorithm(object):
 
 		# initialize dictionaries for the output
 		self.fitness = {individual: 0 for individual, genome in self.population.iteritems()}
-		self.total_error = {individual : 0 for individual, genome in self.population.iteritems()}
+		self.total_error = {individual: 0 for individual, genome in self.population.iteritems()}
 		self.diagnosis = {individual: {} for individual, genome in self.population.iteritems()}
 
 		# if self.diagnose_error:
@@ -71,7 +70,7 @@ class GeneticAlgorithm(object):
 							gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](phenotypic_target)
 							genome[param_idx] = gene_value
 
-						else: # km, uses molecule id as parameter name
+						else:  # km, uses molecule id as parameter name
 							param_idx = param_indices['kms'][parameter]
 							gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](phenotypic_target)
 							genome[param_idx] = gene_value
@@ -122,8 +121,8 @@ class GeneticAlgorithm(object):
 			print('Did not find solution')
 
 		saved_diagnosis = {
-			'penality_diagnosis' : saved_penality_diagnosis,
-			'mutation_diagnosis' : self.saved_mutation_diagnosis,
+			'penality_diagnosis': saved_penality_diagnosis,
+			'mutation_diagnosis': self.saved_mutation_diagnosis,
 		}
 
 		return self.population, self.fitness, saved_error, saved_fitness, saved_diagnosis
@@ -161,7 +160,7 @@ class GeneticAlgorithm(object):
 
 			enforce_bounds = 0
 
-			## Selection
+			# Selection
 			# TODO -- use numpy multimodal instead, for fitness-proportionate selection
 			selection_index = 0
 			total = selection_fitness[selection_index]
@@ -170,7 +169,7 @@ class GeneticAlgorithm(object):
 				selection_index += 1
 				total += selection_fitness[selection_index]
 
-			## Mutation
+			# Mutation
 			# TODO -- vectorize these steps, apply mutations to the entire population at once.
 			genome = population[selection_index]
 			genome_fitness = fitness[selection_index]
@@ -226,10 +225,10 @@ class GeneticAlgorithm(object):
 
 				# TODO -- if self.stochastic_acceptance is False, don't save acceptance_p
 				diagnosis = {
-					'mutation' : mutation,
-					'fitness_change' : fitness_change,
-					'acceptance_p' : np.exp(fitness_change / self.temperature),
-					'enforce_bounds' : enforce_bounds,
+					'mutation': mutation,
+					'fitness_change': fitness_change,
+					'acceptance_p': np.exp(fitness_change / self.temperature),
+					'enforce_bounds': enforce_bounds,
 				}
 
 				self.saved_mutation_diagnosis.append(diagnosis)
@@ -238,17 +237,3 @@ class GeneticAlgorithm(object):
 
 	def fitness_from_error(self, error):
 		return 1 / (1 + error)
-
-
-
-
-
-
-
-
-
-
-
-
-
-

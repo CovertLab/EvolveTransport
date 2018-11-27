@@ -2,7 +2,6 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import json
-import argparse
 import datetime
 
 import numpy as np
@@ -15,7 +14,7 @@ from source.visualize import Visualize
 from source import data
 
 
-## options
+# options
 ENFORCE_BOUNDS = True
 PARAMETER_ANALYTICS = False
 RANK_BASED_SELECTION = False
@@ -26,8 +25,8 @@ SAVE_FITNESS_THRESHOLD = 0.95
 
 
 # simulation parameters
-TIME_TOTAL = 1.0 # seconds
-TIME_STEP = 0.1 # seconds
+TIME_TOTAL = 1.0  # seconds
+TIME_STEP = 0.1  # seconds
 
 # genetic algorithm parameters
 POPULATION_SIZE = 100
@@ -38,7 +37,7 @@ STOCHASTIC_ACCEPTANCE = False
 
 # for staging
 ACCEPTANCE_TEMPERATURE = 0.3
-MUTATION_VARIANCE = 0.1 #0.001 #0.1 # TODO -- make this default, and allow adjustable mutation variance in conditions
+MUTATION_VARIANCE = 0.1  # 0.001 # 0.1 # TODO -- make this default, and allow adjustable mutation variance in conditions
 
 
 # set allowable parameter ranges
@@ -46,23 +45,21 @@ MUTATION_VARIANCE = 0.1 #0.001 #0.1 # TODO -- make this default, and allow adjus
 # while water, the most abundant species, has a concentration of about 50 M.
 PARAM_RANGES = {
 	'km': [
-		1e-9, #1e-9,  # units in M
-		1e0  #1e1 units in M
+		1e-9,  # 1e-9,  # units in M
+		1e0    # 1e1 units in M
 	],
 	'kcat': [
-		1e-2, # gives average kcat of about 100 w/ upper kcat of 1e6
-		1e5   # catalase is around 1e5 /s
+		1e-2,  # gives average kcat of about 100 w/ upper kcat of 1e6
+		1e5    # catalase is around 1e5 /s
 	],
 	}
-
-
 
 # Set up conditions
 '''
 A condition is a dictionary that includes "initial_concentrations", "targets", "penalties" as keys. 
 Each of these is itself a dictionary. 
  
-"initial_concentrations" has {molecule : concentration}, and sets this conditions concentrations to those listed. 
+"initial_concentrations" has {molecule: concentration}, and sets this conditions concentrations to those listed. 
 If unlisted, it uses WCM concentrations.
  
 "targets" has these four sub dictionaries: "reaction_fluxes", "exchange_fluxes", "concentrations", "parameters", 
@@ -76,16 +73,14 @@ each which has a reaction, molcule, or parameter id as entries.
 TEST_SHARED_TRANSPORTER = False
 TEST_LEUCINE = True
 
-
 with open(data.CONDITIONS_FILE, "r") as f:
 	conditions_dict = json.loads(f.read())
 
-
-	# INCLUDE_REACTIONS = [
-	# 	'TRANS-RXN0-265-HIS//HIS.9.',
-	# 	'TRANS-RXN0-265-TRP//TRP.9.',
-	# 	'TRANS-RXN0-265-PHE//PHE.9.'
-	# ]
+	INCLUDE_REACTIONS = [
+		'TRANS-RXN0-265-HIS//HIS.9.',
+		'TRANS-RXN0-265-TRP//TRP.9.',
+		'TRANS-RXN0-265-PHE//PHE.9.'
+	]
 
 if TEST_LEUCINE:
 
@@ -97,38 +92,38 @@ if TEST_LEUCINE:
 	]
 
 	BASELINE_CONCS = {
-		# 'PROTON[p]' : 1e-2,
+		# 'PROTON[p]': 1e-2,
 		}
 
 	C1 = {
 		"initial_concentrations": {
-			'LEU[p]' : 1e-4,
+			'LEU[p]': 1e-4,
 		},
 		"targets": {
-		  "exchange_fluxes": {
-			'LEU[p]': 0.5e-5,
-		  },
+			"exchange_fluxes": {
+				'LEU[p]': 0.5e-5,
+			},
 		},
 		"penalties": {
-		  "exchange_fluxes": 10.0
+			"exchange_fluxes": 10.0
 		}
 	}
 
 	C2 = {
 		"initial_concentrations": {
-			'LEU[p]' : 1e-3,
+			'LEU[p]': 1e-3,
 		},
 		"targets": {
-		  "exchange_fluxes": {
-			'LEU[p]': 0.5e-4,
-		  },
+			"exchange_fluxes": {
+				'LEU[p]': 0.5e-4,
+			},
 		},
 		"penalties": {
-		  "exchange_fluxes": 10.0
+			"exchange_fluxes": 10.0
 		}
 	}
 
-	CONDITIONS = [C1,C2]
+	CONDITIONS = [C1, C2]
 
 
 if TEST_SHARED_TRANSPORTER:
@@ -136,53 +131,45 @@ if TEST_SHARED_TRANSPORTER:
 	INCLUDE_REACTIONS = ['RXN0-5202', 'TRANS-RXN-62B']
 
 	BASELINE_CONCS = {
-		'PROTON[p]' : 1e-2,
+		'PROTON[p]': 1e-2,
 		}
-
-
 
 	C1 = {
 		"initial_concentrations": {
-			'GLY[p]' : 1e-4,
-			'L-ALPHA-ALANINE[p]' : 1e-5, #lower
+			'GLY[p]': 1e-4,
+			'L-ALPHA-ALANINE[p]': 1e-5,  # lower
 		},
 		"targets": {
-		  "reaction_fluxes": {
-			'TRANS-RXN-62B': 0.5e-5,
-			'RXN0-5202': 0.5e-5,
-		  },
+			"reaction_fluxes": {
+				'TRANS-RXN-62B': 0.5e-5,
+				'RXN0-5202': 0.5e-5,
+			},
 		},
 		"penalties": {
 		  "reaction_fluxes": 10.0
 		}
 	}
-
 	C2 = {
 		"initial_concentrations": {
-			'GLY[p]' : 1e-1,
-			'L-ALPHA-ALANINE[p]' : 1e-3, # higher
+			'GLY[p]': 1e-1,
+			'L-ALPHA-ALANINE[p]': 1e-3,  # higher
 		},
 		"targets": {
-		  "reaction_fluxes": {
-			'TRANS-RXN-62B': 1e-4,
-			'RXN0-5202' : 1e-3,
-		  },
+			"reaction_fluxes": {
+				'TRANS-RXN-62B': 1e-4,
+				'RXN0-5202': 1e-3,
+			},
 		},
 		"penalties": {
-		  "reaction_fluxes": 10.0
+			"reaction_fluxes": 10.0
 		}
 	}
 
 	CONDITIONS = [C1, C2]
 
-
-
-
 # TODO -- add check that all reactions listed in conditions actually exist in INCLUDE_REACTIONS
 # CONDITIONS = [conditions_dict['C3']]
 # CONDITIONS = [conditions_dict['C1'], conditions_dict['C2']]
-
-
 
 # get parameters initialization values from targets, if not included here they are set to random.
 INITIAL_PARAMETERS = {}
@@ -190,7 +177,6 @@ for condition in CONDITIONS:
 	if 'parameters' in condition['targets']:
 		params = condition['targets']['parameters']
 		INITIAL_PARAMETERS.update(params)
-
 
 
 class TransportEstimation(object):
@@ -208,52 +194,46 @@ class TransportEstimation(object):
 		self.kinetic_model_config = {
 			'km_range': PARAM_RANGES['km'],
 			'kcat_range': PARAM_RANGES['kcat'],
-			'wcm_sim_data' : data.wcm_sim_out,
-			'set_baseline' : BASELINE_CONCS,
+			'wcm_sim_data': data.wcm_sim_out,
+			'set_baseline': BASELINE_CONCS,
 			}
 
 		self.evaluator_config = {
-			'conditions' : CONDITIONS,
+			'conditions': CONDITIONS,
 			}
 
 		self.ga_config = {
-			'population_size' : POPULATION_SIZE,
-			'rank_based' : RANK_BASED_SELECTION,
-			'number_elitist' : NUMBER_ELITIST,
-			'enforce_bounds' : ENFORCE_BOUNDS,
-			'mutation_variance' : MUTATION_VARIANCE,
-			'max_generations' : MAX_GENERATIONS,
-			'max_fitness' : FITNESS_MAX,
-			'diagnose_error' : DIAGNOSE_ERROR,
-			'initial_parameters' : INITIAL_PARAMETERS,
-			'temperature' : ACCEPTANCE_TEMPERATURE,
-			'stochastic_acceptance' : STOCHASTIC_ACCEPTANCE,
+			'population_size': POPULATION_SIZE,
+			'rank_based': RANK_BASED_SELECTION,
+			'number_elitist': NUMBER_ELITIST,
+			'enforce_bounds': ENFORCE_BOUNDS,
+			'mutation_variance': MUTATION_VARIANCE,
+			'max_generations': MAX_GENERATIONS,
+			'max_fitness': FITNESS_MAX,
+			'diagnose_error': DIAGNOSE_ERROR,
+			'initial_parameters': INITIAL_PARAMETERS,
+			'temperature': ACCEPTANCE_TEMPERATURE,
+			'stochastic_acceptance': STOCHASTIC_ACCEPTANCE,
 			}
 
 		self.plot_config = {
-			'out_dir' : data.PLOTOUTDIR,
-			'parameter_out_dir' : data.PARAMOUTDIR,
-			'saved_param_file' : data.PARAM_FILE,
-			'parameter_analytics' : PARAMETER_ANALYTICS,
+			'out_dir': data.PLOTOUTDIR,
+			'parameter_out_dir': data.PARAMOUTDIR,
+			'saved_param_file': data.PARAM_FILE,
+			'parameter_analytics': PARAMETER_ANALYTICS,
 			'mutation_variance': MUTATION_VARIANCE,
-			'seed' : self.seed,
-			'replicate_id' : self.replicate_id,
-			'fitness_threshold' : SAVE_FITNESS_THRESHOLD,
-			'wcm_sim_data' : data.wcm_sim_out, # is this needed? initial concentrations are available in the kinetic model
+			'seed': self.seed,
+			'replicate_id': self.replicate_id,
+			'fitness_threshold': SAVE_FITNESS_THRESHOLD,
+			'wcm_sim_data': data.wcm_sim_out, # is this needed? initial concentrations are available in the kinetic model
 			}
 
 
-
 	def main(self):
-
 		# TODO -- staging should be done here.
 		# allow passing state between stages, seed population in new GA
 		# new reaction definitions based on conditions. new parameter indices.
 		# for stage in STAGES:
-
-
-
-
 
 		# initialize reactions
 		self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
@@ -281,7 +261,7 @@ class TransportEstimation(object):
 
 
 
-		## Visualization and Analysis
+		# Visualization and Analysis
 		# TODO -- make a separate analysis class
 		self.plot.parameter_analysis(final_population, final_fitness)
 
@@ -328,7 +308,4 @@ class TransportEstimation(object):
 
 
 if __name__ == "__main__":
-	# parser = argparse.ArgumentParser(description='evolve parameters for transport')
-	# parser.add_argument('--simout', help='directory of sim out data', default='out/manual/condition_000002/000000/generation_000000/000000/simOut')
-	# args = parser.parse_args()
 	TransportEstimation().main()

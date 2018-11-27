@@ -36,7 +36,7 @@ class Visualize(object):
 		self.transport_configuration = fitness_function.kinetic_model.transport_configuration
 
 
-	## Analyses -- TODO -- this should not be part of plots
+	# Analyses -- TODO -- this should not be part of plots
 	def parameter_analysis(self, final_population, final_fitness):
 
 		# get indices of individualus with fitness higher than 0.95
@@ -88,7 +88,7 @@ class Visualize(object):
 		print('parameters plot saved')
 
 
-	## Plots
+	# Plots
 	def conditions(self, phenotype, conditions):
 
 		run_for = 1.0
@@ -170,7 +170,7 @@ class Visualize(object):
 						reaction_flux = reaction_fluxes_timeseries[reaction]
 
 						plt.subplot(rows, n_conditions, n_conditions * row_index + condition_index + 1)
-						plt.plot(time_timeseries, reaction_flux, 'b', label = 'reaction flux')
+						plt.plot(time_timeseries, reaction_flux, 'b', label='reaction flux')
 						plt.axhline(y=target_flux, linestyle='--', color='r', label = ('target flux = %.2e' % target_flux))
 						plt.title('cond_' + str(condition_index) + ' rxn_flux target: ' + reaction, y=1.15)
 						plt.ylabel('flux (M/s)')
@@ -220,7 +220,7 @@ class Visualize(object):
 							flux_range[idx] = reaction_fluxes[reaction_id]
 
 						# plot M-M curve for this reaction
-						plt.subplot(rows, n_conditions, n_conditions *row_index + condition_index + 1)
+						plt.subplot(rows, n_conditions, n_conditions * row_index + condition_index + 1)
 						plt.plot(conc_range, flux_range)
 
 						# put target parameters on top of M-M
@@ -246,7 +246,6 @@ class Visualize(object):
 						plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 						row_index += 1
-
 
 		# if PIPERNO:
 		#
@@ -286,15 +285,13 @@ class Visualize(object):
 		# 	plt.xlabel('concentration (M)')
 		# 	plt.ticklabel_format(style='sci', axis='x', scilimits=(0 ,0))
 
-
-
 		plt.subplots_adjust(hspace=2.0, wspace=2.0)
 		# plt.tight_layout()
 
 		if not os.path.exists(self.out_dir):
 			os.mkdir(self.out_dir)
 		fig_name = ('conditions_' + self.replicate_id)
-		plt.savefig(os.path.join(self.out_dir ,fig_name)) # format='pdf'
+		plt.savefig(os.path.join(self.out_dir, fig_name))  # format='pdf'
 
 		print('condition plots saved')
 
@@ -339,7 +336,7 @@ class Visualize(object):
 		# plot reaction fluxes over time
 		index = 1
 		for reaction, timeseries in reaction_fluxes_timeseries.iteritems():
-			plt.subplot(rows, columns, columns *index - (columns - 2))
+			plt.subplot(rows, columns, columns * index - (columns - 2))
 			plt.plot(time_timeseries, timeseries, 'b')
 			plt.title(reaction)
 			if index < len(reaction_fluxes_timeseries):
@@ -353,8 +350,6 @@ class Visualize(object):
 				plt.ylabel("Flux (M/s)")
 				plt.xlabel("Time (s)")
 			index += 1
-
-
 
 		if 'TARGET_FLUXES' in globals():
 			# plot time series of exchange fluxes in TARGET_FLUXES
@@ -381,13 +376,12 @@ class Visualize(object):
 			for transporter, param_indices in params.iteritems():
 				for param_type, params in param_indices.iteritems():
 
-					#plot kms
+					# plot kms
 					if 'km' in param_type:
 						for param, param_idx in params.iteritems():
 							bounds = self.km_range
 
 							param_value = parameters[param_idx]
-
 
 							plt.subplot(rows, columns, columns * (param_idx + 1) - (columns - 3))
 							plt.axvline(x=bounds[0])
@@ -429,7 +423,6 @@ class Visualize(object):
 
 						plt.plot(param_value, 0.5, 'bo', markersize=10)
 
-
 						info = (rxn + ': ' + param_type)
 						plt.title(info)
 						plt.ylim(0, 1)
@@ -441,30 +434,26 @@ class Visualize(object):
 							top=False,
 							labelleft=False)
 
-
-
-
 		plt.subplots_adjust(hspace=1.5, wspace=1.0)
 		plt.tight_layout()
 
 		if not os.path.exists(self.out_dir):
 			os.mkdir(self.out_dir)
 		fig_name = ('sim_' + self.replicate_id)
-		plt.savefig(os.path.join(self.out_dir ,fig_name))
+		plt.savefig(os.path.join(self.out_dir, fig_name))
 
 		print('top simulation plot saved')
 
 	def michaelis_menten(self, all_parameters):
 
+		set_parameters = False
+		set_concentrations = False
 
-		SET_PARAMETERS = False
-		SET_CONCENTRATIONS = False
+		test_transporter = True
+		test_cofactor = True
+		test_competitor = True
 
-		TEST_TRANSPORTER = True
-		TEST_COFACTOR = True
-		TEST_COMPETITOR = True
-
-		columns = 1 + sum([TEST_TRANSPORTER, TEST_COFACTOR, TEST_COMPETITOR])
+		columns = 1 + sum([test_transporter, test_cofactor, test_competitor])
 
 		n_vary = 10
 		n_samples = 100
@@ -476,28 +465,28 @@ class Visualize(object):
 
 		baseline_concentrations = self.kinetic_model.baseline_concentrations
 
-		if SET_CONCENTRATIONS:
+		if set_concentrations:
 			new_concs = {
-				# 'CYCA-MONOMER' : 1e0,
-				# 'L-ALPHA-ALANINE[p]' : 1e-2,
+				# 'CYCA-MONOMER': 1e0,
+				# 'L-ALPHA-ALANINE[p]': 1e-2,
 				# 'L-ALPHA-ALANINE[c]': 1e-5,
-				# 'GLY[p]' : 1e-2,
+				# 'GLY[p]': 1e-2,
 				# 'GLY[c]': 1e-2,
-				# 'PROTON[p]' : 1e-2,
+				# 'PROTON[p]': 1e-2,
 				# 'PROTON[c]': 1e-2,
 			}
 			# set new baseline_concentrations
 			baseline_concentrations.update(new_concs)
 
-		if SET_PARAMETERS:
+		if set_parameters:
 			new_params = {
-				'RXN0-5202' : {
-					'CYCA-MONOMER' : {
-						# 'kcat_f' : 1e0,
-						'kms' : {
-							# 'L-ALPHA-ALANINE[p]' : 1e-3,
-							# 'GLY[p]' : 1e-3,
-							# 'PROTON[p]' : 1,
+				'RXN0-5202': {
+					'CYCA-MONOMER': {
+						# 'kcat_f': 1e0,
+						'kms': {
+							# 'L-ALPHA-ALANINE[p]': 1e-3,
+							# 'GLY[p]': 1e-3,
+							# 'PROTON[p]': 1,
 						}
 					}
 				},
@@ -510,14 +499,14 @@ class Visualize(object):
 
 			for rxn, trps in new_params.iteritems():
 				for trp, pars in trps.iteritems():
-					for par, type in pars.iteritems():
+					for par, par_type in pars.iteritems():
 						if 'km' in par:
-							for mol, val in type.iteritems():
+							for mol, val in par_type.iteritems():
 								idx = self.parameter_indices[rxn][trp][par][mol]
 								all_parameters[idx] = val
 						else:
 							idx = self.parameter_indices[rxn][trp][par]
-							all_parameters[idx] = type
+							all_parameters[idx] = par_type
 
 
 
@@ -530,7 +519,7 @@ class Visualize(object):
 			parameters = self.parameter_indices[reaction_id]
 
 			# TODO -- set A1 to amino acid... or show all?
-			reactants = [mol for mol, coeff in stoich.iteritems() if coeff<0]
+			reactants = [mol for mol, coeff in stoich.iteritems() if coeff < 0]
 			products = [mol for mol, coeff in stoich.iteritems() if coeff > 0]
 			A1 = reactants[0]
 
@@ -553,10 +542,10 @@ class Visualize(object):
 
 			plt.subplot(rows, columns, plot_number)
 			plt.text(0.02, 0.6, 'reaction: ' + reaction_id, weight='bold')
-			plt.text(0.02, 0.45, 'reactants: %s' % (reactants))
-			plt.text(0.02, 0.3, 'products: %s' % (products))
-			plt.text(0.02, 0.15, 'transporters: %s' % (transporters))
-			plt.text(0.02, 0.0, 'parameters: %s' % (param_values[transporters[0]]))
+			plt.text(0.02, 0.45, 'reactants: %s' % reactants)
+			plt.text(0.02, 0.3, 'products: %s' % products)
+			plt.text(0.02, 0.15, 'transporters: %s' % transporters)
+			plt.text(0.02, 0.0, 'parameters: %s' % param_values[transporters[0]])
 			plt.axis('off')
 			plot_number += columns
 			row_number += 1
@@ -581,11 +570,11 @@ class Visualize(object):
 				plt.xscale('log')
 				plt.xlabel(A1 + ' concentration (M)')
 				plt.ylabel('flux (M/s)')
-				plt.title('transporter: %s' % (transporter))
+				plt.title('transporter: %s' % transporter)
 
 				plot_number += 1
 
-				if TEST_TRANSPORTER:
+				if test_transporter:
 					concentrations = baseline_concentrations.copy()
 					conc_values = np.logspace(-8, 1, num=n_samples, endpoint=True, base=10)
 					transporter_concs = np.logspace(-4, 1, num=n_vary, endpoint=True, base=10)
@@ -603,9 +592,9 @@ class Visualize(object):
 
 						# plot M-M curve for this reaction
 						plt.plot(conc_values, flux_values,
-								 color = colors[index],
-								 label = ('conc = %.2e' % (transporter_conc)),
-								 )
+										color = colors[index],
+										label = ('conc = %.2e' % (transporter_conc)),
+										)
 
 					plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 					plt.xscale('log')
@@ -615,7 +604,7 @@ class Visualize(object):
 
 					plot_number += 1
 
-				if TEST_COFACTOR:
+				if test_cofactor:
 
 					concentrations = baseline_concentrations.copy()
 					conc_values = np.logspace(-8, 1, num=n_samples, endpoint=True, base=10)
@@ -635,19 +624,19 @@ class Visualize(object):
 
 							# plot M-M curve for this reaction
 							plt.plot(conc_values, flux_values,
-									 color = colors[index],
-									 label = ('conc = %.2e' % (cofactor_conc)),
-									 )
+											color = colors[index],
+											label = ('conc = %.2e' % (cofactor_conc)),
+											)
 
 						plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 						plt.xscale('log')
 						plt.xlabel(A1 + ' concentration (M)')
 						plt.ylabel('flux (M/s)')
-						plt.title('cofactor: %s' % (B1))
+						plt.title('cofactor: %s' % B1)
 
 					plot_number += 1
 
-				if TEST_COMPETITOR:
+				if test_competitor:
 					# get competitor
 					rxns_transporter = self.transport_configuration[transporter]['reaction_cofactors'].keys()
 					competing_rxns = [trpr for trpr in rxns_transporter if trpr not in reaction_id]
@@ -674,9 +663,9 @@ class Visualize(object):
 
 							# plot M-M curve for this reaction
 							plt.plot(conc_values, flux_values,
-									 color = colors[index],
-									 label = ('conc = %.2e' % (competitor_conc)),
-									 )
+											color = colors[index],
+											label = ('conc = %.2e' % (competitor_conc)),
+											)
 
 						plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 						plt.xscale('log')
@@ -693,15 +682,14 @@ class Visualize(object):
 			plot_number = row_number * columns + 1
 
 
-		plt.subplots_adjust(hspace=0.5,wspace=1.5)
+		plt.subplots_adjust(hspace=0.5, wspace=1.5)
 
 		if not os.path.exists(self.out_dir):
 			os.mkdir(self.out_dir)
 		fig_name = ('MM_' + self.replicate_id)
-		plt.savefig(os.path.join(self.out_dir ,fig_name), bbox_inches='tight')
+		plt.savefig(os.path.join(self.out_dir, fig_name), bbox_inches='tight')
 
 		print('michaelis-menten plot saved')
-
 
 	def evolution(self, saved_error, saved_fitness, saved_diagnosis):
 
@@ -740,7 +728,6 @@ class Visualize(object):
 		top_fitness = [max(fit) for fit in saved_fitness]
 		avg_fitness = [sum(fit) / len(fit) for fit in saved_fitness]
 
-
 		plt.figure(figsize=(20, 20))
 
 		# plot fitness over gens
@@ -752,7 +739,6 @@ class Visualize(object):
 		plt.xlabel('Generation')
 		plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
-
 		# plot histograms of fitness over several generations
 		plt.subplot(3, 2, 3)
 		cmap = plt.cm.get_cmap('Spectral')
@@ -761,9 +747,8 @@ class Visualize(object):
 		plt.hist(hist_fit_by_gen, bins=n_bins, color=colors, label=gen_label)
 		plt.title('Fitness distribution for population with n=' + str(population_size))
 		plt.ylabel('Counts')
-		plt.xlabel('Fitness : 1/(1+error)')
+		plt.xlabel('Fitness: 1/(1+error)')
 		plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
 
 		# plot relative fitness in a stacked bar graph for all gens in shown_gens
 		plt.subplot(3, 2, 2)
@@ -783,7 +768,6 @@ class Visualize(object):
 		plt.ylabel('Cumulative selection fitness')
 		plt.xlabel('Individuals, ordered by rank (most to least fitness)')
 		plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
 
 		# plot error for a error-ordered population at each gen in shown_gens
 		plt.subplot(3, 2, 4)
@@ -809,7 +793,7 @@ class Visualize(object):
 			error_contributions = {
 				condition: {} for condition, terms in penality_diagnosis[0].iteritems() if condition != 'total'}
 			for condition in error_contributions:
-				error_contributions[condition] = {term : [] for term, value in penality_diagnosis[0][condition].iteritems()}
+				error_contributions[condition] = {term: [] for term, value in penality_diagnosis[0][condition].iteritems()}
 
 			# go through each generation's diagnosis, and concatenate errors from each condition and term
 			for time, diagnosis in enumerate(penality_diagnosis):
@@ -822,7 +806,7 @@ class Visualize(object):
 			plt.plot(total_error, linewidth=3, label='total error')
 			for condition, terms in error_contributions.iteritems():
 				for term, series in terms.iteritems():
-					term_label = ('condition ' + str(condition) + ' : ' + term)
+					term_label = ('condition ' + str(condition) + ': ' + term)
 					plt.plot(series, linewidth=3, label=term_label)
 
 			plt.title('Error contributions to top individual')
