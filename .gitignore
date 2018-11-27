@@ -1,0 +1,63 @@
+# Compiled source #
+###################
+*.pyc
+
+# OS generated files #
+######################
+.DS_Store
+.DS_Store?
+._*
+
+# Coverage file #
+#################
+.coverage
+coverage.xml
+
+# Output files #
+################
+out
+out/*
+!out/out.txt
+!out/images.html
+!out/makeHtml.py
+
+# Cached sim data #
+###################
+cached
+
+# Fixtures #
+############
+fixtures/sim/*
+fixtures/kb/*
+fixtures/test/*
+
+# User files #
+################
+user/*
+!user/user.txt
+
+# pyenv python version #
+########################
+.python-version
+
+# Misc #
+########
+*.cPickle
+*.png
+*.csv#
+*.pickle
+*.log
+*.hdf
+/build/
+
+# PyCharm files #
+#################
+# User-specific stuff:
+.idea/workspace.xml
+.idea/tasks.xml
+.idea/dictionaries
+.idea/vcs.xml
+.idea/jsLibraryMappings.xml
+.idea/libraries
+.idea/codeStyleSettings.xml
+.idea/codeStyles/codeStyleConfig.xml
