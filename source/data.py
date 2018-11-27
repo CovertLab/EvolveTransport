@@ -7,49 +7,37 @@ import json
 
 PARAM_FILE = 'best_parameters.tsv'
 
-PARAMOUTDIR = os.path.join(
-	os.path.split(__file__)[0],
-	'out/saved_parameters'
-	)
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+OUTDIR = os.path.join(BASE_DIR, 'out')
+DATADIR = os.path.join(BASE_DIR, 'data')
 
-OUTDIR = os.path.join(
-	os.path.split(__file__)[0],
-	'out', 'plot_out'
-	)
+# output locations
+PARAMOUTDIR = os.path.join(OUTDIR, 'saved_parameters')
+PLOTOUTDIR = os.path.join(OUTDIR, 'plot_out')
 
-WCM_SIMDATA_FILE = os.path.join(
-	os.path.split(__file__)[0],
-	'data', 'wcm_sim_data.json'
-	)
+# data
+WCM_SIMDATA_FILE = os.path.join(DATADIR, 'wcm_sim_data.json')
+CONDITIONS_FILE = os.path.join(DATADIR, 'conditions.json')
 
 with open(WCM_SIMDATA_FILE, "r") as f:
 	wcm_sim_out = json.loads(f.read())
 
-CONDITIONS_FILE = os.path.join(
-	os.path.split(__file__)[0],
-	'data', 'conditions.json'
-	)
-
 
 # Piperno and Oxender 1968 target data TODO -- put in conditions.
 GLYCINE_DATA = os.path.join(
-	os.path.split(__file__)[0],
-	'data', 'piperno_oxender_1968', 'glycine.csv'
+	DATADIR, 'piperno_oxender_1968', 'glycine.csv'
 	)
 
 ISOLEUCINE_DATA = os.path.join(
-	os.path.split(__file__)[0],
-	'data', 'piperno_oxender_1968', 'isoleucine.csv'
+	DATADIR, 'piperno_oxender_1968', 'isoleucine.csv'
 	)
 
 METHIONINE_DATA = os.path.join(
-	os.path.split(__file__)[0],
-	'data', 'piperno_oxender_1968', 'methionine.csv'
+	DATADIR, 'piperno_oxender_1968', 'methionine.csv'
 	)
 
 PHENYLALANINE_DATA = os.path.join(
-	os.path.split(__file__)[0],
-	'data', 'piperno_oxender_1968', 'phenylalanine.csv'
+	DATADIR, 'piperno_oxender_1968', 'phenylalanine.csv'
 	)
 
 target_definition = {'GLY[p]': [], 'ILE[p]': [], 'MET[p]': [], 'PHE[p]': []}
@@ -111,9 +99,8 @@ with open(PHENYLALANINE_DATA) as target_file:
 ## Initialize the reactions
 # load all reactions from file
 REACTIONS_FILE = os.path.join(
-	os.path.split(__file__)[0],
-	'data/aa_transport_reactions.json'
-	# 'data/aa_transport_reactions_curated.json'
+	DATADIR,'aa_transport_reactions.json'
+	# 'aa_transport_reactions_curated.json'
 	)
 
 with open(REACTIONS_FILE, "r") as f:

@@ -231,7 +231,7 @@ class TransportEstimation(object):
 			}
 
 		self.plot_config = {
-			'out_dir' : data.OUTDIR,
+			'out_dir' : data.PLOTOUTDIR,
 			'parameter_out_dir' : data.PARAMOUTDIR,
 			'saved_param_file' : data.PARAM_FILE,
 			'parameter_analytics' : PARAMETER_ANALYTICS,
@@ -311,7 +311,7 @@ class TransportEstimation(object):
 		now = datetime.datetime.now()
 		time_stamp = now.strftime('%m-%d_%H:%M:%S')
 
-		replicate_nums = os.listdir(data.OUTDIR)
+		replicate_nums = os.listdir(data.PLOTOUTDIR)
 		# remove files that don't match pattern
 		replicate_nums = [name for name in replicate_nums if '__' in name]
 		if not replicate_nums:

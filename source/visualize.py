@@ -32,8 +32,8 @@ class Visualize(object):
 		self.km_range = fitness_function.km_range
 		self.kcat_range = fitness_function.kcat_range
 
-		# for michaelis menten plot
-		self.transport_configuration = self.kinetic_model.transport_configuration
+		# for michaelis-menten plot
+		self.transport_configuration = fitness_function.kinetic_model.transport_configuration
 
 
 	## Analyses -- TODO -- this should not be part of plots
