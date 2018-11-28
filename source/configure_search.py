@@ -7,7 +7,7 @@ import datetime
 import numpy as np
 
 from source.kinetic_flux_model import KineticFluxModel
-from source.evaluation import FitnessFunction
+from source.fitness_function import FitnessFunction
 from source.genetic_algorithm import GeneticAlgorithm
 from source.visualize import Visualize
 
@@ -23,21 +23,20 @@ DIAGNOSE_ERROR = True
 # threshold for saving successful parameters
 SAVE_FITNESS_THRESHOLD = 0.95
 
-
 # simulation parameters
 TIME_TOTAL = 1.0  # seconds
 TIME_STEP = 0.1  # seconds
 
 # genetic algorithm parameters
 POPULATION_SIZE = 100
-MAX_GENERATIONS = 101
+MAX_GENERATIONS = 1001
 FITNESS_MAX = 0.999
 NUMBER_ELITIST = 2
 STOCHASTIC_ACCEPTANCE = False
 
 # for staging
 ACCEPTANCE_TEMPERATURE = 0.3
-MUTATION_VARIANCE = 0.1  # 0.001 # 0.1 # TODO -- make this default, and allow adjustable mutation variance in conditions
+MUTATION_VARIANCE = 0.005  # 0.001 # 0.1 # TODO -- make this default, and adjust mutation variance in conditions
 
 
 def reactions_from_exchange(include_exchanges):
@@ -52,16 +51,17 @@ def reactions_from_exchange(include_exchanges):
 
 	return include_reactions
 
+
 # set allowable parameter ranges
 # A concentration of one molecule per E. coli cell is roughly 1 nM (1e-9 M),
 # while water, the most abundant species, has a concentration of about 50 M.
 PARAM_RANGES = {
 	'km': [
-		1e-6,  # 1e-9,  # units in M
+		1e-9,  # 1e-9,  # units in M
 		1e-1    # 1e1 units in M
 	],
 	'kcat': [
-		1e-1,  # 1e-2 gives average kcat of about 100 w/ upper kcat of 1e6
+		1e-2,  # 1e-2 gives average kcat of about 100 w/ upper kcat of 1e6
 		1e5    # 1e5 catalase is around 1e5/s
 	],
 	}
@@ -166,8 +166,12 @@ if TEST_SHARED_TRANSPORTER:
 
 if TEST_PIPERNO:
 
-	INCLUDE_EXCHANGE = ['GLY[p]']  # , 'ILE[p]', 'MET[p]'] #, 'ILE[p]', 'MET[p]', 'PHE[p]'] #['GLY[p]'] #['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
+	INCLUDE_EXCHANGE = ['GLY[p]']  # ['GLY[p]'] #['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
 	INCLUDE_REACTIONS = reactions_from_exchange(INCLUDE_EXCHANGE)
+
+	BASELINE_CONCS = {
+		'PROTON[p]': 1e-2,
+		}
 
 	# make conditions from data
 	CONDITIONS = []
@@ -186,7 +190,7 @@ if TEST_PIPERNO:
 					# 'CPLX0 - 7654' : 0.0, # turn off 'TRANS-RXN0-537' by setting transporter concentration to 0
 				},
 				'targets': {
-					'exchange_fluxes': {flux_id: - target_flux,}, # need negative flux, because uptake removes from [p]
+					'exchange_fluxes': {flux_id: - target_flux},  # need negative flux, because uptake removes from [p]
 					# 'parameters': {'TRANS-RXN-62B': {'kcat': 1e-2, 'km': 1e-2}, }, # low kcat to turn off rxn
 				},
 				'penalties': {
@@ -254,7 +258,7 @@ class TransportEstimation(object):
 			'replicate_id': self.replicate_id,
 			'fitness_threshold': SAVE_FITNESS_THRESHOLD,
 			'exchange_molecules': INCLUDE_EXCHANGE,
-			'wcm_sim_data': data.wcm_sim_out, # is this needed? initial concentrations are available in the kinetic model
+			'wcm_sim_data': data.wcm_sim_out, # TODO is this needed? initial concentrations are available in the kinetic model
 			}
 
 
@@ -264,33 +268,55 @@ class TransportEstimation(object):
 		# new reaction definitions based on conditions. new parameter indices.
 		# for stage in STAGES:
 
+		stages = {
+			0: {
+				'mutation_variance': 0.05,
+			},
+			50: {
+				'mutation_variance': 0.001,
+			}
+		}
 
-
-
-
-
-		# initialize reactions
-		self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
-
-		self.conditions = CONDITIONS
-
-		# make the kinetic transport model with baseline concentrations
-		self.kinetic_model = KineticFluxModel(self.kinetic_model_config, self.reactions)
-
-		# configure the fitness function, passing in the kinetic model
-		self.fitness_function = FitnessFunction(self.evaluator_config, self.kinetic_model)
-
-		# configure the genetic algorithm, passing in a fitness function
-		self.genetic_algorithm = GeneticAlgorithm(self.ga_config, self.fitness_function)
-
-		# configure plotting
-		self.plot = Visualize(self.plot_config, self.fitness_function) ## TODO -- should this use kinetic_model instead of fitness_function?
-
-		# run the genetic algorithm
-		final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis = self.genetic_algorithm.evolve()
-
+		# TODO -- make all of these outputs into a single dictionary
+		final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis = self.run_stages(stages)
 
 		# Visualization and Analysis
+		self.visualize(final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis)
+
+	def run_stages(self, stages):
+
+		import ipdb;
+		ipdb.set_trace()
+
+		for gen, condition in stages.iteritems():
+
+			# initialize reactions
+			self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
+
+			self.conditions = CONDITIONS
+
+			# make the kinetic transport model with baseline concentrations
+			self.kinetic_model = KineticFluxModel(self.kinetic_model_config, self.reactions)
+
+			# configure the fitness function, passing in the kinetic model
+			self.fitness_function = FitnessFunction(self.evaluator_config, self.kinetic_model)
+
+			# configure the genetic algorithm, passing in a fitness function
+			# TODO -- GA should receive run_for
+			self.genetic_algorithm = GeneticAlgorithm(self.ga_config, self.fitness_function)
+
+			# configure plotting
+			self.plot = Visualize(self.plot_config, self.fitness_function) ## TODO -- should this use kinetic_model instead of fitness_function?
+
+			# run the genetic algorithm
+			final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis = self.genetic_algorithm.evolve()
+
+		return final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis
+
+
+	def visualize(self, final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis):
+
+
 		# TODO -- make a separate analysis class
 		self.plot.parameter_analysis(final_population, final_fitness)
 

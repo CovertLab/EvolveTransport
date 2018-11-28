@@ -515,7 +515,7 @@ class Visualize(object):
 			# get cofactor
 			b1 = None
 			if len(reactants) > 1:
-				cofactors = [x for x in reactants if x is not a1]
+				cofactors = [x for x in reactants if x != a1]
 				b1 = cofactors[0]
 
 			# plot info in whole row
