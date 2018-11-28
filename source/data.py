@@ -31,6 +31,31 @@ with open(WCM_SIMDATA_FILE, 'r') as f:
 	wcm_sim_out = json.loads(f.read())
 
 
+amino_acids = [
+	'L-ALPHA-ALANINE',
+	'ARG',
+	'ASN',
+	'L-ASPARTATE',
+	'CYS',
+	'GLT',
+	'GLN',
+	'GLY',
+	'HIS',
+	'ILE',
+	'LEU',
+	'LYS',
+	'MET',
+	'PHE',
+	'PRO',
+	'SER',
+	'THR',
+	'TRP',
+	'TYR',
+	'L-SELENOCYSTEINE',
+	'VAL'
+]
+
+
 # Piperno and Oxender 1968 target data
 GLYCINE_DATA = os.path.join(
 	DATADIR, 'piperno_oxender_1968', 'glycine.csv'
@@ -103,3 +128,6 @@ with open(PHENYLALANINE_DATA) as target_file:
 
 		target = {'substrate_concentration': conc, 'flux': flux}
 		target_definition['PHE[p]'].append(target)
+
+with open(CONDITIONS_FILE, 'r') as f:
+	SET_CONDITIONS = json.loads(f.read())

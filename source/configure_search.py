@@ -40,17 +40,29 @@ ACCEPTANCE_TEMPERATURE = 0.3
 MUTATION_VARIANCE = 0.1  # 0.001 # 0.1 # TODO -- make this default, and allow adjustable mutation variance in conditions
 
 
+def reactions_from_exchange(include_exchanges):
+	include_reactions = []
+	for reaction_id, specs in data.ALL_REACTIONS.iteritems():
+		reaction_molecules = specs['stoichiometry'].keys()
+
+		for exchange in include_exchanges:
+			if exchange in reaction_molecules:
+				# add the reaction
+				include_reactions.append(reaction_id)
+
+	return include_reactions
+
 # set allowable parameter ranges
 # A concentration of one molecule per E. coli cell is roughly 1 nM (1e-9 M),
 # while water, the most abundant species, has a concentration of about 50 M.
 PARAM_RANGES = {
 	'km': [
-		1e-9,  # 1e-9,  # units in M
-		1e1    # 1e1 units in M
+		1e-6,  # 1e-9,  # units in M
+		1e-1    # 1e1 units in M
 	],
 	'kcat': [
-		1e-2,  # gives average kcat of about 100 w/ upper kcat of 1e6
-		1e5    # catalase is around 1e5 /s
+		1e-1,  # 1e-2 gives average kcat of about 100 w/ upper kcat of 1e6
+		1e5    # 1e5 catalase is around 1e5/s
 	],
 	}
 
@@ -71,29 +83,15 @@ each which has a reaction, molcule, or parameter id as entries.
 
 # Saved conditions
 TEST_SHARED_TRANSPORTER = False
-TEST_LEUCINE = True
+TEST_LEUCINE = False
+TEST_PIPERNO = True
 
-with open(data.CONDITIONS_FILE, 'r') as f:
-	conditions_dict = json.loads(f.read())
-
-	INCLUDE_REACTIONS = [
-		'TRANS-RXN0-265-HIS//HIS.9.',
-		'TRANS-RXN0-265-TRP//TRP.9.',
-		'TRANS-RXN0-265-PHE//PHE.9.'
-	]
+BASELINE_CONCS = {}
 
 if TEST_LEUCINE:
 
-	INCLUDE_REACTIONS = [
-		'TRANS-RXN-126B',
-		'TRANS-RXN0-569-LEU//LEU.9.',
-		'TRANS-RXN0-270',
-		'ABC-35-RXN',
-	]
-
-	BASELINE_CONCS = {
-		# 'PROTON[p]': 1e-2,
-		}
+	INCLUDE_EXCHANGE = ['LEU[p]']  # Piperno data: ['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
+	INCLUDE_REACTIONS = reactions_from_exchange(INCLUDE_EXCHANGE)
 
 	C1 = {
 		'initial_concentrations': {
@@ -125,10 +123,8 @@ if TEST_LEUCINE:
 
 	CONDITIONS = [C1, C2]
 
-
 if TEST_SHARED_TRANSPORTER:
-
-	INCLUDE_REACTIONS = ['RXN0-5202', 'TRANS-RXN-62B']
+	include_reactions = ['RXN0-5202', 'TRANS-RXN-62B']
 
 	BASELINE_CONCS = {
 		'PROTON[p]': 1e-2,
@@ -167,9 +163,41 @@ if TEST_SHARED_TRANSPORTER:
 
 	CONDITIONS = [C1, C2]
 
-# TODO -- add check that all reactions listed in conditions actually exist in INCLUDE_REACTIONS
-# CONDITIONS = [conditions_dict['C3']]
-# CONDITIONS = [conditions_dict['C1'], conditions_dict['C2']]
+
+if TEST_PIPERNO:
+
+	INCLUDE_EXCHANGE = ['GLY[p]']  # , 'ILE[p]', 'MET[p]'] #, 'ILE[p]', 'MET[p]', 'PHE[p]'] #['GLY[p]'] #['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
+	INCLUDE_REACTIONS = reactions_from_exchange(INCLUDE_EXCHANGE)
+
+	# make conditions from data
+	CONDITIONS = []
+	for flux_id in INCLUDE_EXCHANGE:
+		target_data = data.target_definition[flux_id]
+
+		for target in target_data:
+
+			initial_concentration = float(target['substrate_concentration'])
+			target_flux = float(target['flux'])
+
+			condition = {
+				'initial_concentrations': {
+					flux_id: initial_concentration,
+					# 'CYCA-MONOMER' : 0.0, # turn off 'TRANS-RXN-62B' by setting transporter concentration to 0
+					# 'CPLX0 - 7654' : 0.0, # turn off 'TRANS-RXN0-537' by setting transporter concentration to 0
+				},
+				'targets': {
+					'exchange_fluxes': {flux_id: - target_flux,}, # need negative flux, because uptake removes from [p]
+					# 'parameters': {'TRANS-RXN-62B': {'kcat': 1e-2, 'km': 1e-2}, }, # low kcat to turn off rxn
+				},
+				'penalties': {
+					'exchange_fluxes': 1,#1e6,
+				},
+			}
+
+			CONDITIONS.append(condition)
+
+# CONDITIONS = [data.SET_CONDITIONS['C3']]
+# CONDITIONS = [data.SET_CONDITIONS['C1'], data.SET_CONDITIONS['C2']]
 
 # get parameters initialization values from targets, if not included here they are set to random.
 INITIAL_PARAMETERS = {}
@@ -225,6 +253,7 @@ class TransportEstimation(object):
 			'seed': self.seed,
 			'replicate_id': self.replicate_id,
 			'fitness_threshold': SAVE_FITNESS_THRESHOLD,
+			'exchange_molecules': INCLUDE_EXCHANGE,
 			'wcm_sim_data': data.wcm_sim_out, # is this needed? initial concentrations are available in the kinetic model
 			}
 
@@ -234,6 +263,11 @@ class TransportEstimation(object):
 		# allow passing state between stages, seed population in new GA
 		# new reaction definitions based on conditions. new parameter indices.
 		# for stage in STAGES:
+
+
+
+
+
 
 		# initialize reactions
 		self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
@@ -300,6 +334,21 @@ class TransportEstimation(object):
 		replicate_id = (time_stamp + '__' + str(replicate_num))
 
 		return replicate_id
+
+
+	# def reactions_from_exchange(self, include_exchanges):
+	#
+	# 	include_reactions = []
+	# 	for reaction_id, specs in data.ALL_REACTIONS.iteritems():
+	# 		reaction_molecules = specs['stoichiometry'].keys()
+	#
+	# 		for exchange in include_exchanges:
+	# 			if exchange in reaction_molecules:
+	# 				# add the reaction
+	# 				include_reactions.append(reaction_id)
+	#
+	# 	return include_reactions
+
 
 
 if __name__ == '__main__':

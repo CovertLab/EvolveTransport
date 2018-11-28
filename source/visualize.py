@@ -29,6 +29,7 @@ class Visualize(object):
 		self.replicate_id = config.get('replicate_id', None)
 		self.save_fitness_threshold = config.get('fitness_threshold')
 		self.wcm_sim_data = config.get('wcm_sim_data', None)
+		self.exchange_molecules = config.get('exchange_molecules', None)
 
 		self.fitness_function = fitness_function
 		self.kinetic_model = fitness_function.kinetic_model
@@ -501,12 +502,21 @@ class Visualize(object):
 			# TODO -- set a1 to amino acid... or show all?
 			reactants = [mol for mol, coeff in stoich.iteritems() if coeff < 0]
 			products = [mol for mol, coeff in stoich.iteritems() if coeff > 0]
-			a1 = reactants[0]
+
+			a1_set = False
+			for mol in self.exchange_molecules:
+				if mol in reactants:
+					a1 = mol
+					a1_set = True
+
+			if not a1_set:
+				a1 = reactants[0]
 
 			# get cofactor
 			b1 = None
 			if len(reactants) > 1:
-				b1 = reactants[1]
+				cofactors = [x for x in reactants if x is not a1]
+				b1 = cofactors[0]
 
 			# plot info in whole row
 			param_values = {}
