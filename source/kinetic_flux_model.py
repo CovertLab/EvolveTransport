@@ -4,20 +4,18 @@ import scipy.constants as constants
 import numpy as np
 
 class KineticFluxModel(object):
-
-	def __init__(self, config, reactions):
-		'''
-		Args:
-			reactions: a dictionary with reaction ids assigned to subdictionary with a 'transporters' list,
-				stoichiometry, and reversibility
-
+	'''
+	Attributes:
 		parameter_indices: a dictionary, organized by transporter -- each with 'reaction_cofactors' for
 			each reaction that it is a part of, 'partition' for all of its bounded forms, and 'parameter_indices'
 			for the indices at which each of its parameters can be assigned in an array.
 
 		rate_laws: a dict, with a key for each reaction id, and then subdictionaries with each reaction's transporters
 			and their rate law function. These rate laws are used directly from within this dictionary
-		'''
+	'''
+
+	def __init__(self, config, reactions):
+
 
 		self.time_step = 0.1
 		self.avogadro = constants.Avogadro
@@ -37,8 +35,9 @@ class KineticFluxModel(object):
 		'''
 
 		Args:
-			reactions: A dictionary with all reactions, passed into object in init
-
+			reactions: A dictionary with all reactions, passed into object in init.
+			each reaction ids assigned to subdictionary with a 'transporters' list,
+			stoichiometry, and reversibility
 
 		Returns:
 			transport_configuration: a dictionary with partition and reaction_cofactor entries for each reaction
@@ -86,7 +85,7 @@ class KineticFluxModel(object):
 			# get partition, reactions, and parameter indices for each transporter, and save to transport_configuration dictionary
 			for transporter in transporters:
 
-				# get competition for this transporter from other reactions
+				# get competition for this transporter from all other reactions
 				competing_reactions = [rxn for rxn, specs2 in reactions.iteritems() if
 						(rxn is not reaction) and (transporter in specs2['transporters'])]
 
@@ -96,16 +95,15 @@ class KineticFluxModel(object):
 					reactants2 = [mol for mol, coeff in stoich2.iteritems() if coeff < 0]
 					competitors.append(reactants2)
 
-				# partition includes competitors and cofactors.
+				# partition includes both competitors and cofactors.
 				partition = competitors + cofactors
-
 				transport_configuration[transporter]['partition'] = partition
 				transport_configuration[transporter]['reaction_cofactors'][reaction] = cofactors
 
-				# add kms to parameter indices
+				# partitioned_molecules: the set of molecules requiring kmss
 				partitioned_molecules = set([molecule for part in partition for molecule in part])
 
-				# add each new parameter to parameter_indices
+				# add each new parameter to parameter_indices and assign a parameter_index
 				sharing_reactions = competing_reactions + [reaction]
 				for molecule in partitioned_molecules:
 					new_param = False
