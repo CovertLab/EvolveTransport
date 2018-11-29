@@ -9,7 +9,7 @@ class GeneticAlgorithm(object):
 
 	'''
 
-	def __init__(self, config, fitness_function):
+	def __init__(self, config, fitness_function, n_generations):
 
 		# configuration
 		self.population_size = config.get('population_size', None)
@@ -18,11 +18,13 @@ class GeneticAlgorithm(object):
 		self.enforce_bounds = config.get('enforce_bounds', True)
 		self.diagnose_error = config.get('diagnose_error', False)
 		self.mutation_variance = config.get('mutation_variance', 1.0)
-		self.max_generations = config.get('max_generations', 1000)
+		# self.max_generations = config.get('max_generations', 1000)
 		self.max_fitness = config.get('max_fitness', 0.99)
-		self.initial_parameters = config.get('initial_parameters', None)
 		self.temperature = config.get('temperature', 1.0)
 		self.stochastic_acceptance = config.get('stochastic_acceptance', False)
+
+		self.initial_parameters = config.get('initial_parameters', None) # TODO -- this should not be in the config...
+		self.max_generations = n_generations # TODO -- rename this
 
 		# fitness function
 		self.fitness_function = fitness_function
@@ -65,6 +67,8 @@ class GeneticAlgorithm(object):
 					for transporter in transporters:
 						param_indices = self.parameter_indices[rxn][transporter]
 
+						import ipdb; ipdb.set_trace()
+						# TODO -- The GA should not use reaction data...
 						if 'kcat' in parameter:
 							param_idx = param_indices[parameter]
 							gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](phenotypic_target)
@@ -82,6 +86,7 @@ class GeneticAlgorithm(object):
 		saved_error = []
 		saved_fitness = []
 		saved_penality_diagnosis = []
+		results = {}
 
 		# genetic algorithm loop
 		while generations < self.max_generations and top_fit < self.max_fitness:
@@ -126,7 +131,13 @@ class GeneticAlgorithm(object):
 			'mutation_diagnosis': self.saved_mutation_diagnosis,
 		}
 
-		return self.population, self.fitness, saved_error, saved_fitness, saved_diagnosis
+		results['final_population'] = self.population
+		results['final_fitness'] = self.fitness
+		results['saved_error'] = saved_error
+		results['saved_fitness'] = saved_fitness
+		results['saved_diagnosis'] = saved_diagnosis
+
+		return results
 
 	def repopulate(self, population, fitness):
 		'''

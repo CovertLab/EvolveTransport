@@ -41,35 +41,6 @@ class Visualize(object):
 		# for michaelis-menten plot
 		self.transport_configuration = fitness_function.kinetic_model.transport_configuration
 
-	# Analyses -- TODO -- this should not be part of plots
-	def parameter_analysis(self, final_population, final_fitness):
-
-		# get indices of individualus with fitness higher than 0.95
-		top_fit_indices = [index for index, value in enumerate(final_fitness.values()) if value >= self.save_fitness_threshold]
-		top_fit_parameters = [final_population[index] for index in top_fit_indices]
-
-		# TODO -- convert genotype to phenotype
-
-		# save top parameters to 'best_parameters' file
-		if not os.path.exists(self.parameter_out_dir):
-			os.mkdir(self.parameter_out_dir)
-
-		with open(os.path.join(self.parameter_out_dir, self.saved_param_file), 'a') as tsv_file:
-			writer = csv.writer(tsv_file)
-			for parameter in top_fit_parameters:
-				writer.writerow(parameter)
-		tsv_file.close()
-
-		# Plot parameter space
-		if self.parameter_analytics:
-			# gather all saved parameter values
-			with open(os.path.join(self.parameter_out_dir, self.saved_param_file), 'r') as tsv_file:
-				read = csv.reader(tsv_file)
-				best_parameters = list(read)
-			tsv_file.close()
-			self.parameters(best_parameters)
-
-		print('parameters analyzed')
 
 	def parameters(self, best_parameters):
 

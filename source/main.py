@@ -1,16 +1,13 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import json
 import datetime
 
 import numpy as np
 
-from source.kinetic_flux_model import KineticFluxModel
-from source.fitness_function import FitnessFunction
-from source.genetic_algorithm import GeneticAlgorithm
+from source.configure_evolution import ConfigureEvolution
+from source.analyze import Analyze
 from source.visualize import Visualize
-
 from source import data
 
 
@@ -211,7 +208,7 @@ for condition in CONDITIONS:
 		INITIAL_PARAMETERS.update(params)
 
 
-class TransportEstimation(object):
+class Main(object):
 
 	def __init__(self):
 
@@ -240,7 +237,7 @@ class TransportEstimation(object):
 			'number_elitist': NUMBER_ELITIST,
 			'enforce_bounds': ENFORCE_BOUNDS,
 			'mutation_variance': MUTATION_VARIANCE,
-			'max_generations': MAX_GENERATIONS,
+			# 'max_generations': MAX_GENERATIONS, # TODO -- remove
 			'max_fitness': FITNESS_MAX,
 			'diagnose_error': DIAGNOSE_ERROR,
 			'initial_parameters': INITIAL_PARAMETERS,
@@ -263,10 +260,8 @@ class TransportEstimation(object):
 
 
 	def main(self):
-		# TODO -- staging should be done here.
-		# allow passing state between stages, seed population in new GA
-		# new reaction definitions based on conditions. new parameter indices.
-		# for stage in STAGES:
+
+		self.conditions = CONDITIONS
 
 		stages = {
 			0: {
@@ -277,63 +272,59 @@ class TransportEstimation(object):
 			}
 		}
 
-		# TODO -- make all of these outputs into a single dictionary
-		final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis = self.run_stages(stages)
+		run_for = 10
+
+
+		self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
+
+		evo_config = {}
+		evo_config['kinetic_model_config'] = self.kinetic_model_config
+		evo_config['evaluator_config'] = self.evaluator_config
+		evo_config['ga_config'] = self.ga_config
+
+
+		self.configuration = ConfigureEvolution(evo_config, self.reactions, condition)
+
+		results = self.configuration.run_evolution(run_for)
+
+		final_population = results['final_population']
+		final_fitness = results['final_fitness']
+		saved_error = results['saved_error']
+		saved_fitness = results['saved_fitness']
+		saved_diagnosis = results['saved_diagnosis']
+
+		# configure plotting
+		## TODO -- should this use kinetic_model instead of fitness_function?
+		self.analyze = Analyze(self.plot_config, self.configuration.fitness_function)
+		self.plot = Visualize(self.plot_config, self.configuration.fitness_function)
 
 		# Visualization and Analysis
 		self.visualize(final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis)
 
-	def run_stages(self, stages):
-
-		import ipdb;
-		ipdb.set_trace()
-
-		for gen, condition in stages.iteritems():
-
-			# initialize reactions
-			self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
-
-			self.conditions = CONDITIONS
-
-			# make the kinetic transport model with baseline concentrations
-			self.kinetic_model = KineticFluxModel(self.kinetic_model_config, self.reactions)
-
-			# configure the fitness function, passing in the kinetic model
-			self.fitness_function = FitnessFunction(self.evaluator_config, self.kinetic_model)
-
-			# configure the genetic algorithm, passing in a fitness function
-			# TODO -- GA should receive run_for
-			self.genetic_algorithm = GeneticAlgorithm(self.ga_config, self.fitness_function)
-
-			# configure plotting
-			self.plot = Visualize(self.plot_config, self.fitness_function) ## TODO -- should this use kinetic_model instead of fitness_function?
-
-			# run the genetic algorithm
-			final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis = self.genetic_algorithm.evolve()
-
-		return final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis
 
 
+
+	# TODO -- this should be in visualize. set with self.plot_config
 	def visualize(self, final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis):
 
 
-		# TODO -- make a separate analysis class
-		self.plot.parameter_analysis(final_population, final_fitness)
+
+		self.analyze.parameters(final_population, final_fitness)
+
 
 		self.plot.evolution(saved_error, saved_fitness, saved_diagnosis)
 
 		# get best individual's parameters and simulate it
 		top_index = final_fitness.values().index(max(final_fitness.values()))
 		top_genotype = final_population[top_index]
-		top_phenotype = self.fitness_function.get_phenotype(top_genotype)
+		top_phenotype = self.configuration.fitness_function.get_phenotype(top_genotype)
 
 		run_for = 1
-		sim_output = self.kinetic_model.run_simulation(top_phenotype, run_for)
+		sim_output = self.configuration.kinetic_model.run_simulation(top_phenotype, run_for)
 
 		# plot simulation of best individual
 		self.plot.sim_out(sim_output, top_phenotype, self.conditions) # TODO -- why does sim_out care about conditions?
 
-		# # TODO -- make parameter plot of conditions, rather parameters in sim_out
 		# plot best individual across all conditions
 		self.plot.conditions(top_phenotype, self.conditions)
 
@@ -378,4 +369,4 @@ class TransportEstimation(object):
 
 
 if __name__ == '__main__':
-	TransportEstimation().main()
+	Main().main()

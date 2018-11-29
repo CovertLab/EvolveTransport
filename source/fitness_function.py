@@ -49,7 +49,6 @@ class FitnessFunction(object):
 
 			error_terms = {term: 0.0 for term, value in penalties.iteritems()}
 			# concentration error
-			# TODO -- logarithmic penalty for flux and concentration! But what if values == 0?
 			if 'concentrations' in penalties:
 				for molecule, target_conc in targets['concentrations'].iteritems():
 
