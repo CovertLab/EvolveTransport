@@ -10,18 +10,38 @@ class ConfigureEvolution(object):
 	Sets up and runs the genetic algorithm for a given condition
 	'''
 
-	def __init__(self, config, initial_reactions, condition):
+	def __init__(self, config):
 
-		self.kinetic_model_config = config.get('kinetic_model_config', None)
-		self.evaluator_config = config.get('evaluator_config', None)
-		self.ga_config = config.get('ga_config', None)
+
 		self.all_reactions = config.get('all_reactions', None)
+		add_reactions = config.get('add_reactions', None)
+
+		self.kinetic_model_config = {
+			'km_range': config['km_range'],
+			'kcat_range': config['kcat_range'],
+			'wcm_sim_data': config['wcm_sim_data'],
+			'set_baseline': config['set_baseline'],
+			}
+
+		self.evaluator_config = {
+			'conditions': config['conditions'],
+			}
+
+		self.ga_config = {
+			'population_size': config['population_size'],
+			'rank_based': config['rank_based'],
+			'number_elitist': config['number_elitist'],
+			'mutation_variance': config['mutation_variance'],
+			'max_fitness': config['max_fitness'],
+			'diagnose_error': config['diagnose_error'],
+			'initial_parameters': config['initial_parameters'], # TODO -- this can be passed to GA from fitness function.
+			'temperature': config['temperature'],
+			'stochastic_acceptance': config['stochastic_acceptance'],
+			}
 
 		# initialize reactions
 		self.reactions = {}
-		self.add_reactions(initial_reactions)
-
-		self.condition = condition
+		self.add_reactions(add_reactions)
 
 
 	# def run_evolution(self, condition, n_generations):
@@ -46,6 +66,7 @@ class ConfigureEvolution(object):
 
 		new_reactions = {reaction: self.all_reactions[reaction] for reaction in add_reactions}
 		self.reactions.update(new_reactions)
+
 
 	def reconfigure(self, config):
 

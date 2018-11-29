@@ -216,18 +216,19 @@ class Main(object):
 		# replicate id is used to name outputs of this replicate
 		self.replicate_id = self.get_replicate_id()
 
-		self.kinetic_model_config = {
+		self.evo_config = {
+			'all_reactions': data.ALL_REACTIONS,
+
+			# for kinetic model config
 			'km_range': PARAM_RANGES['km'],
 			'kcat_range': PARAM_RANGES['kcat'],
 			'wcm_sim_data': data.wcm_sim_out,
 			'set_baseline': BASELINE_CONCS,
-			}
 
-		self.evaluator_config = {
+			# for fitness function config
 			'conditions': CONDITIONS,
-			}
 
-		self.ga_config = {
+			# for genetic algorithm config
 			'population_size': POPULATION_SIZE,
 			'rank_based': RANK_BASED_SELECTION,
 			'number_elitist': NUMBER_ELITIST,
@@ -237,9 +238,9 @@ class Main(object):
 			'initial_parameters': INITIAL_PARAMETERS, # TODO -- this can be passed to GA from fitness function.
 			'temperature': ACCEPTANCE_TEMPERATURE,
 			'stochastic_acceptance': STOCHASTIC_ACCEPTANCE,
-			}
+		}
 
-		self.plot_config = {
+		self.visualize_config = {
 			'out_dir': data.PLOTOUTDIR,
 			'parameter_out_dir': data.PARAMOUTDIR,
 			'saved_param_file': data.PARAM_FILE,
@@ -249,64 +250,65 @@ class Main(object):
 			'replicate_id': self.replicate_id,
 			'fitness_threshold': SAVE_FITNESS_THRESHOLD,
 			'exchange_molecules': INCLUDE_EXCHANGE,
-			'wcm_sim_data': data.wcm_sim_out, # TODO is this needed? initial concentrations are available in the kinetic model
+			'wcm_sim_data': data.wcm_sim_out, # TODO -- initial concentrations are already available in the kinetic model
 			}
-
-		self.evo_config = {}
-		self.evo_config['kinetic_model_config'] = self.kinetic_model_config
-		self.evo_config['evaluator_config'] = self.evaluator_config
-		self.evo_config['ga_config'] = self.ga_config
-		self.evo_config['all_reactions'] = data.ALL_REACTIONS
 
 	def main(self):
 
-		self.conditions = CONDITIONS
+		stages = [
+			{'run_for': 10,
+			 'add_reactions': initial_reactions,
+			 'mutation_variance': 0.05},
+			{'run_for': 10,
+			 'add_reactions': ['RXN0-5202'],
+			 'mutation_variance': 0.001},
+		]
 
-		stages = {
-			0: {
-				'mutation_variance': 0.05,
-			},
-			50: {
-				'mutation_variance': 0.001,
-			}
-		}
+		for stage in stages:
 
-		run_for = 10
-
-		self.configuration = ConfigureEvolution(self.evo_config, initial_reactions, self.conditions[0])
-		results = self.configuration.run_evolution(run_for)
-
-		add_reaction = ['RXN0-5202']
-		# self.configuration.add_reactions(add_reaction)
+			for parameter, value in stage.iteritems():
+				if parameter is 'run_for':
+					run_for = stage['run_for']
+				else:
+					self.evo_config[parameter] = value
 
 
+			# TODO -- pass in reactions
+			# TODO -- combine reactions of prior stages.
+
+			self.configuration = ConfigureEvolution(self.evo_config)
+
+			results = self.configuration.run_evolution(run_for)
 
 
-		final_population = results['final_population']
-		final_fitness = results['final_fitness']
-		saved_error = results['saved_error']
-		saved_fitness = results['saved_fitness']
-		saved_diagnosis = results['saved_diagnosis']
+			# TODO -- map parameters
+			parameters = self.configuration.map_parameters()
+
+
+			# results for this stage
+			final_population = results['final_population']
+			final_fitness = results['final_fitness']
+			saved_error = results['saved_error']
+			saved_fitness = results['saved_fitness']
+			saved_diagnosis = results['saved_diagnosis']
 
 		# configure plotting
 		## TODO -- should this use kinetic_model instead of fitness_function?
-		self.analyze = Analyze(self.plot_config, self.configuration.fitness_function)
-		self.plot = Visualize(self.plot_config, self.configuration.fitness_function)
+		self.analyze = Analyze(self.visualize_config, self.configuration.fitness_function)
+		self.plot = Visualize(self.visualize_config, self.configuration.fitness_function)
 
 		# Visualization and Analysis
 		self.visualize(final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis)
 
 
-
-
-	# TODO -- this should be in visualize. set with self.plot_config
+	# TODO -- this should be in visualize. set with self.visualize_config
 	def visualize(self, final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis):
 
 		self.analyze.parameters(final_population, final_fitness)
 
 		self.plot.evolution(saved_error, saved_fitness, saved_diagnosis)
 
-		# get best individual's parameters and simulate it
+		# simulate the best individual
 		top_index = final_fitness.values().index(max(final_fitness.values()))
 		top_genotype = final_population[top_index]
 		top_phenotype = self.configuration.fitness_function.get_phenotype(top_genotype)
@@ -343,7 +345,6 @@ class Main(object):
 		replicate_id = (time_stamp + '__' + str(replicate_num))
 
 		return replicate_id
-
 
 
 if __name__ == '__main__':
