@@ -16,19 +16,14 @@ class ConfigureEvolution(object):
 		self.evaluator_config = config.get('evaluator_config', None)
 		self.ga_config = config.get('ga_config', None)
 
-
 		# initialize reactions
 		self.reactions = reactions
 
 		self.condition = condition
 
 
-
 	# def run_evolution(self, condition, n_generations):
 	def run_evolution(self, n_generations):
-
-		# import ipdb; ipdb.set_trace()
-
 
 		# make the kinetic transport model with baseline concentrations
 		self.kinetic_model = KineticFluxModel(self.kinetic_model_config, self.reactions)
@@ -44,10 +39,18 @@ class ConfigureEvolution(object):
 
 		return results
 
-	#
-	# def reconfigure(self):
-	#
-	# 	# use this to modify the reactions and condition. add reactions, change conditions.
-	#
-	# def map_parameters(self):
 
+	def add_reactions(self, add_reactions):
+
+		import ipdb; ipdb.set_trace()
+
+		pass
+
+	def reconfigure(self, config):
+
+		pass
+
+
+	def map_parameters(self):
+
+		pass

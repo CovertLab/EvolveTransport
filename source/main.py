@@ -188,7 +188,7 @@ if TEST_PIPERNO:
 				},
 				'targets': {
 					'exchange_fluxes': {flux_id: - target_flux},  # need negative flux, because uptake removes from [p]
-					# 'parameters': {'TRANS-RXN-62B': {'kcat': 1e-2, 'km': 1e-2}, }, # low kcat to turn off rxn
+					'parameters': {'TRANS-RXN0-537': {'kcat_f': 1e-2, 'GLY[p]': 1e-2}, }, # low kcat to turn off rxn
 				},
 				'penalties': {
 					'exchange_fluxes': 1,#1e6,
@@ -237,7 +237,6 @@ class Main(object):
 			'number_elitist': NUMBER_ELITIST,
 			'enforce_bounds': ENFORCE_BOUNDS,
 			'mutation_variance': MUTATION_VARIANCE,
-			# 'max_generations': MAX_GENERATIONS, # TODO -- remove
 			'max_fitness': FITNESS_MAX,
 			'diagnose_error': DIAGNOSE_ERROR,
 			'initial_parameters': INITIAL_PARAMETERS,
@@ -258,6 +257,10 @@ class Main(object):
 			'wcm_sim_data': data.wcm_sim_out, # TODO is this needed? initial concentrations are available in the kinetic model
 			}
 
+		self.evo_config = {}
+		self.evo_config['kinetic_model_config'] = self.kinetic_model_config
+		self.evo_config['evaluator_config'] = self.evaluator_config
+		self.evo_config['ga_config'] = self.ga_config
 
 	def main(self):
 
@@ -273,19 +276,22 @@ class Main(object):
 		}
 
 		run_for = 10
+		add_reaction = ['RXN0-5202']
 
 
 		self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
 
-		evo_config = {}
-		evo_config['kinetic_model_config'] = self.kinetic_model_config
-		evo_config['evaluator_config'] = self.evaluator_config
-		evo_config['ga_config'] = self.ga_config
 
-
-		self.configuration = ConfigureEvolution(evo_config, self.reactions, condition)
+		self.configuration = ConfigureEvolution(self.evo_config, self.reactions, condition)
 
 		results = self.configuration.run_evolution(run_for)
+
+
+
+		self.configuration.add_reactions(add_reaction)
+
+
+
 
 		final_population = results['final_population']
 		final_fitness = results['final_fitness']

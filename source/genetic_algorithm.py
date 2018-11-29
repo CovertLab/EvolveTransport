@@ -24,7 +24,7 @@ class GeneticAlgorithm(object):
 		self.stochastic_acceptance = config.get('stochastic_acceptance', False)
 
 		self.initial_parameters = config.get('initial_parameters', None) # TODO -- this should not be in the config...
-		self.max_generations = n_generations # TODO -- rename this
+		self.n_generations = n_generations # TODO -- rename this
 
 		# fitness function
 		self.fitness_function = fitness_function
@@ -56,28 +56,26 @@ class GeneticAlgorithm(object):
 
 		genome = np.random.uniform(0, 1, self.genome_size)
 
-		# initialize defined parameters to target value
-		for rxn, target_parameters in self.initial_parameters.iteritems():
-			for parameter, phenotypic_target in target_parameters.iteritems():
-				if phenotypic_target:
+		# set initial parameters
+		for reaction, target_parameters in self.initial_parameters.iteritems():
+			for transporter, param_indices in self.parameter_indices[reaction].iteritems():
+				for target_parameter, target_value in target_parameters.iteritems():
 
-					# get index of this phenotypic target by looking up reaction's transporters,
-					# and the parameters associated with them.
-					transporters = self.reactions[rxn]['transporters']
-					for transporter in transporters:
-						param_indices = self.parameter_indices[rxn][transporter]
+					if 'kcat' in target_parameter:
+						param_idx = param_indices[target_parameter]
+					# km
+					else:
+						param_idx = param_indices['kms'][target_parameter]
 
-						import ipdb; ipdb.set_trace()
-						# TODO -- The GA should not use reaction data...
-						if 'kcat' in parameter:
-							param_idx = param_indices[parameter]
-							gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](phenotypic_target)
-							genome[param_idx] = gene_value
+					gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](target_value)
+					# is target within bounds?
 
-						else:  # km, uses molecule id as parameter name
-							param_idx = param_indices['kms'][parameter]
-							gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](phenotypic_target)
-							genome[param_idx] = gene_value
+					if 0 <= gene_value <= 1:
+						genome[param_idx] = gene_value
+					else:
+						raise Exception('Target parameter out of range: {}'.format(
+							reaction + ', ' + target_parameter + ' = ' + str(target_value)))
+
 		return genome
 
 	def evolve(self):
@@ -89,7 +87,7 @@ class GeneticAlgorithm(object):
 		results = {}
 
 		# genetic algorithm loop
-		while generations < self.max_generations and top_fit < self.max_fitness:
+		while generations < self.n_generations and top_fit < self.max_fitness:
 
 			# evaluate fitness of each individual
 			for individual, genome in self.population.iteritems():
