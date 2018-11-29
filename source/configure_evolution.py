@@ -10,14 +10,16 @@ class ConfigureEvolution(object):
 	Sets up and runs the genetic algorithm for a given condition
 	'''
 
-	def __init__(self, config, reactions, condition):
+	def __init__(self, config, initial_reactions, condition):
 
 		self.kinetic_model_config = config.get('kinetic_model_config', None)
 		self.evaluator_config = config.get('evaluator_config', None)
 		self.ga_config = config.get('ga_config', None)
+		self.all_reactions = config.get('all_reactions', None)
 
 		# initialize reactions
-		self.reactions = reactions
+		self.reactions = {}
+		self.add_reactions(initial_reactions)
 
 		self.condition = condition
 
@@ -42,9 +44,8 @@ class ConfigureEvolution(object):
 
 	def add_reactions(self, add_reactions):
 
-		# import ipdb; ipdb.set_trace()
-
-		pass
+		new_reactions = {reaction: self.all_reactions[reaction] for reaction in add_reactions}
+		self.reactions.update(new_reactions)
 
 	def reconfigure(self, config):
 

@@ -87,7 +87,7 @@ BASELINE_CONCS = {}
 if TEST_LEUCINE:
 
 	INCLUDE_EXCHANGE = ['LEU[p]']  # Piperno data: ['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
-	INCLUDE_REACTIONS = reactions_from_exchange(INCLUDE_EXCHANGE)
+	initial_reactions = reactions_from_exchange(INCLUDE_EXCHANGE)
 
 	C1 = {
 		'initial_concentrations': {
@@ -120,7 +120,7 @@ if TEST_LEUCINE:
 	CONDITIONS = [C1, C2]
 
 if TEST_SHARED_TRANSPORTER:
-	include_reactions = ['RXN0-5202', 'TRANS-RXN-62B']
+	initial_reactions = ['RXN0-5202', 'TRANS-RXN-62B']
 
 	BASELINE_CONCS = {
 		'PROTON[p]': 1e-2,
@@ -163,7 +163,7 @@ if TEST_SHARED_TRANSPORTER:
 if TEST_PIPERNO:
 
 	INCLUDE_EXCHANGE = ['GLY[p]']  # ['GLY[p]'] #['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
-	INCLUDE_REACTIONS = reactions_from_exchange(INCLUDE_EXCHANGE)
+	initial_reactions = reactions_from_exchange(INCLUDE_EXCHANGE)
 
 	BASELINE_CONCS = {
 		'PROTON[p]': 1e-2,
@@ -195,9 +195,6 @@ if TEST_PIPERNO:
 			}
 
 			CONDITIONS.append(condition)
-
-# CONDITIONS = [data.SET_CONDITIONS['C3']]
-# CONDITIONS = [data.SET_CONDITIONS['C1'], data.SET_CONDITIONS['C2']]
 
 # get parameters initialization values from targets, if not included here they are set to random.
 INITIAL_PARAMETERS = {}
@@ -259,6 +256,7 @@ class Main(object):
 		self.evo_config['kinetic_model_config'] = self.kinetic_model_config
 		self.evo_config['evaluator_config'] = self.evaluator_config
 		self.evo_config['ga_config'] = self.ga_config
+		self.evo_config['all_reactions'] = data.ALL_REACTIONS
 
 	def main(self):
 
@@ -273,20 +271,13 @@ class Main(object):
 			}
 		}
 
-		run_for = 100
-		add_reaction = ['RXN0-5202']
+		run_for = 10
 
-
-		self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
-
-
-		self.configuration = ConfigureEvolution(self.evo_config, self.reactions, condition)
-
+		self.configuration = ConfigureEvolution(self.evo_config, initial_reactions, self.conditions[0])
 		results = self.configuration.run_evolution(run_for)
 
-
-
-		self.configuration.add_reactions(add_reaction)
+		add_reaction = ['RXN0-5202']
+		# self.configuration.add_reactions(add_reaction)
 
 
 
@@ -311,10 +302,7 @@ class Main(object):
 	# TODO -- this should be in visualize. set with self.plot_config
 	def visualize(self, final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis):
 
-
-
 		self.analyze.parameters(final_population, final_fitness)
-
 
 		self.plot.evolution(saved_error, saved_fitness, saved_diagnosis)
 
@@ -355,20 +343,6 @@ class Main(object):
 		replicate_id = (time_stamp + '__' + str(replicate_num))
 
 		return replicate_id
-
-
-	# def reactions_from_exchange(self, include_exchanges):
-	#
-	# 	include_reactions = []
-	# 	for reaction_id, specs in data.ALL_REACTIONS.iteritems():
-	# 		reaction_molecules = specs['stoichiometry'].keys()
-	#
-	# 		for exchange in include_exchanges:
-	# 			if exchange in reaction_molecules:
-	# 				# add the reaction
-	# 				include_reactions.append(reaction_id)
-	#
-	# 	return include_reactions
 
 
 
