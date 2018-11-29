@@ -12,7 +12,6 @@ from source import data
 
 
 # options
-ENFORCE_BOUNDS = True
 PARAMETER_ANALYTICS = False
 RANK_BASED_SELECTION = False
 DIAGNOSE_ERROR = True
@@ -29,7 +28,7 @@ POPULATION_SIZE = 100
 MAX_GENERATIONS = 1001
 FITNESS_MAX = 0.999
 NUMBER_ELITIST = 2
-STOCHASTIC_ACCEPTANCE = False
+STOCHASTIC_ACCEPTANCE = True
 
 # for staging
 ACCEPTANCE_TEMPERATURE = 0.3
@@ -235,11 +234,10 @@ class Main(object):
 			'population_size': POPULATION_SIZE,
 			'rank_based': RANK_BASED_SELECTION,
 			'number_elitist': NUMBER_ELITIST,
-			'enforce_bounds': ENFORCE_BOUNDS,
 			'mutation_variance': MUTATION_VARIANCE,
 			'max_fitness': FITNESS_MAX,
 			'diagnose_error': DIAGNOSE_ERROR,
-			'initial_parameters': INITIAL_PARAMETERS,
+			'initial_parameters': INITIAL_PARAMETERS, # TODO -- this can be passed to GA from fitness function.
 			'temperature': ACCEPTANCE_TEMPERATURE,
 			'stochastic_acceptance': STOCHASTIC_ACCEPTANCE,
 			}
@@ -275,7 +273,7 @@ class Main(object):
 			}
 		}
 
-		run_for = 10
+		run_for = 100
 		add_reaction = ['RXN0-5202']
 
 

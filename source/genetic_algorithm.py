@@ -15,7 +15,6 @@ class GeneticAlgorithm(object):
 		self.population_size = config.get('population_size', None)
 		self.rank_based = config.get('rank_based', False)
 		self.number_elitist = config.get('number_elitist', False)
-		self.enforce_bounds = config.get('enforce_bounds', True)
 		self.diagnose_error = config.get('diagnose_error', False)
 		self.mutation_variance = config.get('mutation_variance', 1.0)
 		# self.max_generations = config.get('max_generations', 1000)
@@ -200,12 +199,11 @@ class GeneticAlgorithm(object):
 			new_genome = np.array([x + y for x, y in zip(genome, mutation)])
 
 			# enforce bounds on genome
-			if self.enforce_bounds:
-				# if parameter is not in range, initialize it randomly within range
-				out_of_range = np.where(np.logical_or(new_genome <= 0.0, new_genome >= 1.0))
-				new_genome[out_of_range] = np.random.uniform(0.0, 1.0)
+			# if parameter is not in range, initialize it randomly within range
+			out_of_range = np.where(np.logical_or(new_genome <= 0.0, new_genome >= 1.0))
+			new_genome[out_of_range] = np.random.uniform(0.0, 1.0)
 
-				enforce_bounds = float(len(out_of_range[0])) / len(new_genome)
+			enforce_bounds = float(len(out_of_range[0])) / len(new_genome)
 
 			# genome_fitness
 			new_genome_error = self.fitness_function.evaluate(new_genome)

@@ -144,62 +144,59 @@ class Visualize(object):
 						row_index += 1
 
 
-				if target_type == 'parameters':
+				# if target_type == 'parameters':
+				#
+				# 	# conc_range = PARAM_RANGES['km']
+				# 	n_sample_concentrations = 1000000
+				# 	conc_range = np.linspace(self.km_range[0], self.km_range[1], n_sample_concentrations)
+				# 	flux_range = np.empty_like(conc_range)
+				#
+				# 	# show michaelis-menten for each reaction
+				# 	for reaction_id, parameters in targets.iteritems():
+				#
+				# 		# create new reaction and parameter dicts
+				# 		reaction = {}
+				#
+				# 		# configure transport model to this reaction alone
+				# 		reaction[reaction_id] = self.reactions[reaction_id]
+				#
+				# 		kinetic_model = KineticFluxModel(self.kinetic_model.config, reaction)
+				#
+				# 		reactants = [mol for mol, coeff in reaction[reaction_id]['stoichiometry'].iteritems() if coeff < 0]
+				# 		a1 = reactants[0]
+				# 		concentrations = self.kinetic_model.initialize_state()
+				#
+				# 		for idx, conc in enumerate(conc_range):
+				# 			concentrations[a1] = conc
+				# 			reaction_fluxes, exchange_fluxes = kinetic_model.get_fluxes(phenotype, concentrations)
+				# 			flux_range[idx] = reaction_fluxes[reaction_id]
+				#
+				# 		# plot M-M curve for this reaction
+				# 		plt.subplot(rows, n_conditions, n_conditions * row_index + condition_index + 1)
+				# 		plt.plot(conc_range, flux_range)
+				#
+				# 		# put target parameters on top of M-M
+				# 		for param, value in parameters.iteritems():
+				# 			if 'kcat' in param:
+				# 				transporter_id = reaction[reaction_id]['transporters']
+				# 				t_conc = concentrations[transporter_id[0]]  # uses concentration of first transporter
+				# 				vmax = value * t_conc
+				# 				plt.axhline(
+				# 					y=vmax, linestyle='--', color='r',
+				# 					label='target vmax, w/ kcat = ' + str(value)
+				# 				)
+				# 			else:
+				# 				plt.axvline(x=value, linestyle='--', color='k', label=('target km = ' + str(value)))
+				#
+				# 		plt.xscale('log')
+				# 		plt.xlabel(a1 + ' concentration (M)')
+				# 		plt.ylabel('flux (M/s)')
+				# 		plt.title('cond_' + str(condition_index) + ' param targets, ' + reaction_id, y=1.15)
+				# 		# plt.title(reaction_id)
+				# 		plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+				#
+				# 		row_index += 1
 
-					# conc_range = PARAM_RANGES['km']
-					n_sample_concentrations = 1000000
-					conc_range = np.linspace(self.km_range[0], self.km_range[1], n_sample_concentrations)
-					flux_range = np.empty_like(conc_range)
-
-					# show michaelis-menten for each reaction
-					for reaction_id, parameters in targets.iteritems():
-
-						# create new reaction and parameter dicts
-						reaction = {}
-						param_indices = {}
-
-						# configure transport model to this reaction alone
-						reaction[reaction_id] = self.reactions[reaction_id]
-						param_indices[reaction_id] = self.parameter_indices[reaction_id]
-						kinetic_model = KineticFluxModel(reaction, param_indices)
-
-						# TODO -- fix this to match new parameter indices
-						import ipdb; ipdb.set_trace
-						a1 = reaction[reaction_id]['substrates']['A1']
-						concentrations = self.kinetic_model.initialize_state()
-
-						for idx, conc in enumerate(conc_range):
-							concentrations[a1] = conc
-							reaction_fluxes, exchange_fluxes = kinetic_model.get_fluxes(phenotype, concentrations)
-							flux_range[idx] = reaction_fluxes[reaction_id]
-
-						# plot M-M curve for this reaction
-						plt.subplot(rows, n_conditions, n_conditions * row_index + condition_index + 1)
-						plt.plot(conc_range, flux_range)
-
-						# put target parameters on top of M-M
-						for param, value in parameters.iteritems():
-							if 'kcat' in param:
-								transporter_id = reaction[reaction_id]['transporter']
-								t_conc = concentrations[transporter_id[0]]  # uses concentration of first transporter
-								vmax = value * t_conc
-								plt.axhline(
-									y=vmax, linestyle='--', color='r',
-									label='target vmax, w/ kcat = ' + str(value)
-								)
-							# transporter_id[0]
-							# plt.axhline(y=value, linestyle='--', color='r', label='target kcat')
-							if 'km' in param:
-								plt.axvline(x=value, linestyle='--', color='k', label=('target km = ' + str(value)))
-
-						plt.xscale('log')
-						plt.xlabel(a1 + ' concentration (M)')
-						plt.ylabel('flux (M/s)')
-						plt.title('cond_' + str(condition_index) + ' param targets, ' + reaction_id, y=1.15)
-						# plt.title(reaction_id)
-						plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-
-						row_index += 1
 
 		# if PIPERNO:
 		#
@@ -370,9 +367,10 @@ class Visualize(object):
 						plt.axvline(x=bounds[1])
 						plt.axhline(y=0.5)
 
+						# import ipdb; ipdb.set_trace()
 						# plot target parameters if defined in target_params
-						if rxn in target_params and param in target_params[rxn]:
-							target_value = target_params[rxn][param]
+						if rxn in target_params and param_type in target_params[rxn]:
+							target_value = target_params[rxn][param_type]
 							plt.axvline(x=target_value, linewidth=4, color='r')
 
 						plt.plot(param_value, 0.5, 'bo', markersize=10)

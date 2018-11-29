@@ -20,6 +20,7 @@ class KineticFluxModel(object):
 		self.time_step = 0.1
 		self.avogadro = constants.Avogadro
 
+		self.config = config
 		self.km_range = config.get('km_range', None)
 		self.kcat_range = config.get('kcat_range', None)
 		self.wcm_sim_data = config.get('wcm_sim_data', None)
