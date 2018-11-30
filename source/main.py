@@ -225,6 +225,7 @@ class Main(object):
 
 		self.evo_config = {
 			'all_reactions': data.ALL_REACTIONS,
+			'include_reactions': [],
 
 			# for kinetic model config
 			'km_range': PARAM_RANGES['km'],
@@ -265,7 +266,8 @@ class Main(object):
 		stages = {
 			1: {
 			'stage_n_gens': 10,
-			'initial_reactions': initial_reactions,
+			'include_reactions': initial_reactions,
+			'add_reactions': [],
 			'conditions': CONDITIONS,
 			'mutation_variance': 0.05,
 			'params_from_stages': [],
@@ -285,12 +287,21 @@ class Main(object):
 
 		for stage_id, stage in stages.iteritems():
 
-			conditions = stage['conditions']
+			self.conditions = stage['conditions']
 			n_gens = stage['stage_n_gens']
+			add_reactions = stage['add_reactions']
 			params_from_stages = stage['params_from_stages']
+
+			# import ipdb; ipdb.set_trace()
+			# update reactions
+			include_reactions = self.evo_config['include_reactions']
+			include_reactions.extend(add_reactions)
+			self.evo_config['include_reactions'] = include_reactions
 
 			# update evo_config
 			self.evo_config.update(stage)
+
+
 
 			# initialize seed_parameters
 			seed_parameters = {}
@@ -320,7 +331,7 @@ class Main(object):
 
 			# configure evolution and run for 'n_gens' generations
 			self.configuration = ConfigureEvolution(self.evo_config)
-			results = self.configuration.run_evolution(stage['stage_n_gens'])
+			results = self.configuration.run_evolution(n_gens)
 
 
 
