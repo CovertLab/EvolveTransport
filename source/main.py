@@ -187,7 +187,11 @@ if TEST_PIPERNO:
 				},
 				'targets': {
 					'exchange_fluxes': {flux_id: - target_flux},  # need negative flux, because uptake removes from [p]
-					'parameters': {'TRANS-RXN0-537': {'kcat_f': 1e-2, 'GLY[p]': 1e-2}, }, # low kcat to turn off rxn
+					'parameters': {
+						'TRANS-RXN0-537': {
+							'CPLX0-7654': {'kcat_f': 1e-2, 'GLY[p]': 1e-2}, # low kcat to turn off rxn
+						},
+					}
 				},
 				'penalties': {
 					'exchange_fluxes': 1,#1e6,
@@ -196,12 +200,14 @@ if TEST_PIPERNO:
 
 			CONDITIONS.append(condition)
 
-# get parameters initialization values from targets, if not included here they are set to random.
-INITIAL_PARAMETERS = {}
-for condition in CONDITIONS:
-	if 'parameters' in condition['targets']:
-		params = condition['targets']['parameters']
-		INITIAL_PARAMETERS.update(params)
+
+# # get parameters initialization values from targets, if not included here they are set to random.
+# INITIAL_PARAMETERS = {}
+# for condition in CONDITIONS:
+# 	if 'parameters' in condition['targets']:
+# 		params = condition['targets']['parameters']
+# 		INITIAL_PARAMETERS.update(params)
+
 
 
 class Main(object):
@@ -227,7 +233,7 @@ class Main(object):
 			'set_baseline': BASELINE_CONCS,
 
 			# for fitness function config
-			'conditions': CONDITIONS,
+			'conditions': None, # CONDITIONS, # TODO -- this should be set within the stage.
 
 			# for genetic algorithm config
 			'population_size': POPULATION_SIZE,
@@ -236,7 +242,7 @@ class Main(object):
 			'mutation_variance': MUTATION_VARIANCE,
 			'max_fitness': FITNESS_MAX,
 			'diagnose_error': DIAGNOSE_ERROR,
-			'seed_parameters': INITIAL_PARAMETERS, # TODO -- this can be passed to GA from fitness function.
+			'seed_parameters': None,
 			'temperature': ACCEPTANCE_TEMPERATURE,
 			'stochastic_acceptance': STOCHASTIC_ACCEPTANCE,
 		}
@@ -256,51 +262,80 @@ class Main(object):
 
 	def main(self):
 
-		stages = [
-			{
-			'run_for': 10,
-			'add_reactions': initial_reactions,
+		stages = {
+			1: {
+			'stage_n_gens': 10,
+			'initial_reactions': initial_reactions,
+			'conditions': CONDITIONS,
 			'mutation_variance': 0.05,
+			'params_from_stages': [],
 			},
-			{
-			'run_for': 10,
+			2: {
+			'stage_n_gens': 10,
+			# 'include_reactions': initial_reactions,
 			'add_reactions': ['RXN0-5202'],
+			'conditions': CONDITIONS,
 			'mutation_variance': 0.001,
+			'params_from_stages': [1],
+
 			},
-		]
+		}
 
-		for stage in stages:
+		phenotype_summaries = {}
 
-			for parameter, value in stage.iteritems():
-				if parameter is 'run_for':
-					run_for = stage['run_for']
-				else:
-					self.evo_config[parameter] = value
+		for stage_id, stage in stages.iteritems():
 
+			conditions = stage['conditions']
+			n_gens = stage['stage_n_gens']
+			params_from_stages = stage['params_from_stages']
+
+			# update evo_config
+			self.evo_config.update(stage)
+
+			# initialize seed_parameters
+			seed_parameters = {}
+
+			# add target parameters
+			target_parameters = {}
+			for condition in stage['conditions']:
+				if 'parameters' in condition['targets']:
+					params = condition['targets']['parameters']
+					target_parameters.update(params)
+			seed_parameters.update(target_parameters)
+
+			# add parameters from previous stages.
+			stages_parameters = {}
+			for stage in params_from_stages:
+				params = phenotype_summaries[stage]
+				stages_parameters.update(params)
+
+			# TODO -- this could overwrite target parameters
+			seed_parameters.update(stages_parameters)
+
+
+			# seed parameters
+			self.evo_config['seed_parameters'] = seed_parameters
+
+
+
+			# configure evolution and run for 'n_gens' generations
 			self.configuration = ConfigureEvolution(self.evo_config)
-
-			results = self.configuration.run_evolution(run_for)
-
+			results = self.configuration.run_evolution(stage['stage_n_gens'])
 
 
 
-			# TODO -- add top phenotype's parameters
+
+
+
+
+
+
+			# save top phenotype's parameters
 			final_population = results['final_population']
 			final_fitness = results['final_fitness']
 			top_phenotype = self.get_top_phenotype(final_population, final_fitness)
-			# self.evo_config['seed_parameters']
-
-			phenotype_summary = self.configuration.kinetic_model.get_phenotype_summary(top_phenotype)
-
-
-
-			import ipdb;
-			ipdb.set_trace()
-
-			# pass in reactions. combine reactions of prior stages.
-			# need to set parameters. what contains the parameters?
-			# self.genetic_algorithm.initialize_genome gets input target parameters.
-
+			top_phenotype_summary = self.configuration.kinetic_model.get_phenotype_summary(top_phenotype)
+			phenotype_summaries[stage_id] = top_phenotype_summary
 
 			# results for this stage
 			final_population = results['final_population']
@@ -308,6 +343,8 @@ class Main(object):
 			saved_error = results['saved_error']
 			saved_fitness = results['saved_fitness']
 			saved_diagnosis = results['saved_diagnosis']
+
+
 
 
 		# configure plotting
@@ -319,13 +356,7 @@ class Main(object):
 		self.visualize(final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis)
 
 
-
-	def reconfigure(self, config):
-
-		pass
-
-
-	def map_parameters(self):
+	def seed_parameters_from_targets(self):
 
 		pass
 
@@ -336,14 +367,6 @@ class Main(object):
 		top_phenotype = self.configuration.fitness_function.get_phenotype(top_genotype)
 
 		return top_phenotype
-
-	# def get_phenotype_summary(self, phenotype):
-	#
-	# 	parameter_indices = self.configuration.kinetic_model.parameter_indices
-	#
-	# 	import ipdb; ipdb.set_trace()
-	# 	# TODO -- make dictionary structured like parameter_indices, but with the phenotypic parameter values.
-
 
 
 	# TODO -- this should be in visualize. set with self.visualize_config

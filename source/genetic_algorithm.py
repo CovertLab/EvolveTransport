@@ -22,7 +22,7 @@ class GeneticAlgorithm(object):
 		self.temperature = config.get('temperature', 1.0)
 		self.stochastic_acceptance = config.get('stochastic_acceptance', False)
 
-		self.seed_parameters = config.get('seed_parameters', None) # TODO -- this should not be in the config...
+		self.seed_parameters = config.get('seed_parameters', None)
 		self.n_generations = n_generations # TODO -- rename this
 
 		# fitness function
@@ -55,21 +55,22 @@ class GeneticAlgorithm(object):
 
 		genome = np.random.uniform(0, 1, self.genome_size)
 
-		# set initial parameters
-		for reaction, seed_parameters in self.seed_parameters.iteritems():
+		# set seeded parameters
+		for reaction, seed_tranporters in self.seed_parameters.iteritems():
+			for seed_transporter, seed_parameters in seed_tranporters.iteritems():
 
-			for transporter, param_indices in self.parameter_indices[reaction].iteritems():
-				for seed_parameter, seed_value in seed_parameters.iteritems():
-					param_idx = param_indices[seed_parameter]
-					gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](seed_value)
+				# look up the seeded parameters' indices
+				for transporter, param_indices in self.parameter_indices[reaction].iteritems():
+					for seed_parameter, seed_value in seed_parameters.iteritems():
+						param_idx = param_indices[seed_parameter]
+						gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](seed_value)
 
-					# is seed within bounds?
-					if (gene_value >= 0) and (gene_value <= 1):
-						genome[param_idx] = gene_value
-					else:
-						raise Exception('Seeded parameter out of range: {}'.format(
-							reaction + ', ' + seed_parameter + ' = ' + str(seed_value)))
-
+						# is seed within bounds?
+						if (gene_value >= 0) and (gene_value <= 1):
+							genome[param_idx] = gene_value
+						else:
+							raise Exception('Seeded parameter out of range: {}'.format(
+								reaction + ', ' + seed_parameter + ' = ' + str(seed_value)))
 		return genome
 
 	def evolve(self):

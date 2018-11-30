@@ -14,7 +14,7 @@ class ConfigureEvolution(object):
 
 
 		self.all_reactions = config.get('all_reactions', None)
-		add_reactions = config.get('add_reactions', None)
+		include_reactions = config.get('initial_reactions', None)
 
 		self.kinetic_model_config = {
 			'km_range': config['km_range'],
@@ -41,7 +41,7 @@ class ConfigureEvolution(object):
 
 		# initialize reactions
 		self.reactions = {}
-		self.add_reactions(add_reactions)
+		self.add_reactions(include_reactions)
 
 
 	# def run_evolution(self, condition, n_generations):
