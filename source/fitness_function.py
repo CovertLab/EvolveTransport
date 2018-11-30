@@ -90,8 +90,7 @@ class FitnessFunction(object):
 					for param_id, parameter_target in parameters.iteritems():
 						if parameter_target:
 
-							import ipdb
-							ipdb.set_trace()
+							import ipdb; ipdb.set_trace()
 							# TODO -- make sure param_indices points correctly
 							index = self.parameter_indices[rxn][param_id]
 							# parameter_value = phenotype[index]
@@ -150,39 +149,25 @@ class FitnessFunction(object):
 
 		for reaction, transporters in self.parameter_indices.iteritems():
 			for transporter, params in transporters.iteritems():
-				for param_type, indices in params.iteritems():
+				for param_id, param_idx in params.iteritems():
 
+					# kcats
+					if 'kcat'  in param_id:
+						bounds = self.kcat_range
 					# kms
-					if param_type is 'kms':
+					else:
 						bounds = self.km_range
 
-						for param, idx in indices.iteritems():
-							g_to_p = self.make_genotype_to_phenotype(bounds[0], bounds[1])
-							p_to_g = self.make_phenotype_to_genotype(bounds[0], bounds[1])
+					g_to_p = self.make_genotype_to_phenotype(bounds[0], bounds[1])
+					p_to_g = self.make_phenotype_to_genotype(bounds[0], bounds[1])
 
-							mapping = {
-								'bounds': bounds,
-								'geno_to_pheno': g_to_p,
-								'pheno_to_geno': p_to_g,
-							}
+					mapping = {
+						'bounds': bounds,
+						'geno_to_pheno': g_to_p,
+						'pheno_to_geno': p_to_g,
+					}
 
-							phenotype_transform[idx] = mapping
-
-					# kcats (one at a time)
-					else:
-						bounds = self.kcat_range
-
-						# for param, idx in indices.iteritems():
-						g_to_p = self.make_genotype_to_phenotype(bounds[0], bounds[1])
-						p_to_g = self.make_phenotype_to_genotype(bounds[0], bounds[1])
-
-						mapping = {
-							'bounds': bounds,
-							'geno_to_pheno': g_to_p,
-							'pheno_to_geno': p_to_g,
-						}
-
-						phenotype_transform[indices] = mapping
+					phenotype_transform[param_idx] = mapping
 
 		return phenotype_transform
 

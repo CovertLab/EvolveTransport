@@ -58,16 +58,9 @@ class GeneticAlgorithm(object):
 		# set initial parameters
 		for reaction, seed_parameters in self.seed_parameters.iteritems():
 
-
 			for transporter, param_indices in self.parameter_indices[reaction].iteritems():
 				for seed_parameter, seed_value in seed_parameters.iteritems():
-
-					if 'kcat' in seed_parameter:
-						param_idx = param_indices[seed_parameter]
-					# km
-					else:
-						param_idx = param_indices['kms'][seed_parameter]
-
+					param_idx = param_indices[seed_parameter]
 					gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](seed_value)
 
 					# is seed within bounds?
