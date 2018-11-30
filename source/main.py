@@ -290,7 +290,7 @@ class Main(object):
 			top_phenotype = self.get_top_phenotype(final_population, final_fitness)
 			# self.evo_config['seed_parameters']
 
-			phenotype_summary = self.get_phenotype_summary(top_phenotype)
+			phenotype_summary = self.configuration.kinetic_model.get_phenotype_summary(top_phenotype)
 
 
 
@@ -337,12 +337,12 @@ class Main(object):
 
 		return top_phenotype
 
-	def get_phenotype_summary(self, phenotype):
-
-		parameter_indices = self.configuration.kinetic_model.parameter_indices
-
-		import ipdb; ipdb.set_trace()
-		# TODO -- make dictionary structured like parameter_indices, but with the phenotypic parameter values.
+	# def get_phenotype_summary(self, phenotype):
+	#
+	# 	parameter_indices = self.configuration.kinetic_model.parameter_indices
+	#
+	# 	import ipdb; ipdb.set_trace()
+	# 	# TODO -- make dictionary structured like parameter_indices, but with the phenotypic parameter values.
 
 
 

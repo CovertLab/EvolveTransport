@@ -128,6 +128,17 @@ class KineticFluxModel(object):
 
 		return parameter_indices, transport_configuration, parameter_index
 
+	def get_phenotype_summary(self, phenotype):
+
+		phenotype_summary = {}
+		for reaction, transporters in self.parameter_indices.iteritems():
+			phenotype_summary[reaction] = {}
+			for transporter, param_indices in transporters.iteritems():
+				phenotype_summary[reaction][transporter] = {
+					param_id: phenotype[idx] for param_id, idx in param_indices.iteritems()
+				}
+
+		return phenotype_summary
 
 	# Make rate laws
 	def make_rate_laws(self, reactions, transport_configuration, parameter_indices):
