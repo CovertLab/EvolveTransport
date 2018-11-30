@@ -22,7 +22,7 @@ class GeneticAlgorithm(object):
 		self.temperature = config.get('temperature', 1.0)
 		self.stochastic_acceptance = config.get('stochastic_acceptance', False)
 
-		self.initial_parameters = config.get('initial_parameters', None) # TODO -- this should not be in the config...
+		self.seed_parameters = config.get('seed_parameters', None) # TODO -- this should not be in the config...
 		self.n_generations = n_generations # TODO -- rename this
 
 		# fitness function
@@ -56,24 +56,26 @@ class GeneticAlgorithm(object):
 		genome = np.random.uniform(0, 1, self.genome_size)
 
 		# set initial parameters
-		for reaction, target_parameters in self.initial_parameters.iteritems():
-			for transporter, param_indices in self.parameter_indices[reaction].iteritems():
-				for target_parameter, target_value in target_parameters.iteritems():
+		for reaction, seed_parameters in self.seed_parameters.iteritems():
 
-					if 'kcat' in target_parameter:
-						param_idx = param_indices[target_parameter]
+
+			for transporter, param_indices in self.parameter_indices[reaction].iteritems():
+				for seed_parameter, seed_value in seed_parameters.iteritems():
+
+					if 'kcat' in seed_parameter:
+						param_idx = param_indices[seed_parameter]
 					# km
 					else:
-						param_idx = param_indices['kms'][target_parameter]
+						param_idx = param_indices['kms'][seed_parameter]
 
-					gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](target_value)
-					# is target within bounds?
+					gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](seed_value)
 
-					if 0 <= gene_value <= 1:
+					# is seed within bounds?
+					if (gene_value >= 0) and (gene_value <= 1):
 						genome[param_idx] = gene_value
 					else:
-						raise Exception('Target parameter out of range: {}'.format(
-							reaction + ', ' + target_parameter + ' = ' + str(target_value)))
+						raise Exception('Seeded parameter out of range: {}'.format(
+							reaction + ', ' + seed_parameter + ' = ' + str(seed_value)))
 
 		return genome
 

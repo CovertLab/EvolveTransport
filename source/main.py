@@ -208,12 +208,13 @@ class Main(object):
 
 	def __init__(self):
 
-		# set random seed to make search deterministic
+		# set random seed.
+		# seed at a constant to repeat searches
 		self.seed = np.random.randint(2 ** 32 - 1)
 		print('seed = ' + str(self.seed))
-		np.random.seed(1)
+		np.random.seed(self.seed)
 
-		# replicate id is used to name outputs of this replicate
+		# replicate id for naming output figures
 		self.replicate_id = self.get_replicate_id()
 
 		self.evo_config = {
@@ -235,7 +236,7 @@ class Main(object):
 			'mutation_variance': MUTATION_VARIANCE,
 			'max_fitness': FITNESS_MAX,
 			'diagnose_error': DIAGNOSE_ERROR,
-			'initial_parameters': INITIAL_PARAMETERS, # TODO -- this can be passed to GA from fitness function.
+			'seed_parameters': INITIAL_PARAMETERS, # TODO -- this can be passed to GA from fitness function.
 			'temperature': ACCEPTANCE_TEMPERATURE,
 			'stochastic_acceptance': STOCHASTIC_ACCEPTANCE,
 		}
@@ -256,12 +257,16 @@ class Main(object):
 	def main(self):
 
 		stages = [
-			{'run_for': 10,
-			 'add_reactions': initial_reactions,
-			 'mutation_variance': 0.05},
-			{'run_for': 10,
-			 'add_reactions': ['RXN0-5202'],
-			 'mutation_variance': 0.001},
+			{
+			'run_for': 10,
+			'add_reactions': initial_reactions,
+			'mutation_variance': 0.05,
+			},
+			{
+			'run_for': 10,
+			'add_reactions': ['RXN0-5202'],
+			'mutation_variance': 0.001,
+			},
 		]
 
 		for stage in stages:
@@ -272,17 +277,29 @@ class Main(object):
 				else:
 					self.evo_config[parameter] = value
 
-
-			# TODO -- pass in reactions
-			# TODO -- combine reactions of prior stages.
-
 			self.configuration = ConfigureEvolution(self.evo_config)
 
 			results = self.configuration.run_evolution(run_for)
 
 
-			# TODO -- map parameters
-			parameters = self.configuration.map_parameters()
+
+
+			# TODO -- add top phenotype's parameters
+			final_population = results['final_population']
+			final_fitness = results['final_fitness']
+			top_phenotype = self.get_top_phenotype(final_population, final_fitness)
+			# self.evo_config['seed_parameters']
+
+			phenotype_summary = self.get_phenotype_summary(top_phenotype)
+
+
+
+			import ipdb;
+			ipdb.set_trace()
+
+			# pass in reactions. combine reactions of prior stages.
+			# need to set parameters. what contains the parameters?
+			# self.genetic_algorithm.initialize_genome gets input target parameters.
 
 
 			# results for this stage
@@ -291,6 +308,7 @@ class Main(object):
 			saved_error = results['saved_error']
 			saved_fitness = results['saved_fitness']
 			saved_diagnosis = results['saved_diagnosis']
+
 
 		# configure plotting
 		## TODO -- should this use kinetic_model instead of fitness_function?
@@ -301,6 +319,33 @@ class Main(object):
 		self.visualize(final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis)
 
 
+
+	def reconfigure(self, config):
+
+		pass
+
+
+	def map_parameters(self):
+
+		pass
+
+
+	def get_top_phenotype(self, population, fitness):
+		top_index = fitness.values().index(max(fitness.values()))
+		top_genotype = population[top_index]
+		top_phenotype = self.configuration.fitness_function.get_phenotype(top_genotype)
+
+		return top_phenotype
+
+	def get_phenotype_summary(self, phenotype):
+
+		parameter_indices = self.configuration.kinetic_model.parameter_indices
+
+		import ipdb; ipdb.set_trace()
+		# TODO -- make dictionary structured like parameter_indices, but with the phenotypic parameter values.
+
+
+
 	# TODO -- this should be in visualize. set with self.visualize_config
 	def visualize(self, final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis):
 
@@ -309,9 +354,7 @@ class Main(object):
 		self.plot.evolution(saved_error, saved_fitness, saved_diagnosis)
 
 		# simulate the best individual
-		top_index = final_fitness.values().index(max(final_fitness.values()))
-		top_genotype = final_population[top_index]
-		top_phenotype = self.configuration.fitness_function.get_phenotype(top_genotype)
+		top_phenotype = self.get_top_phenotype(final_population, final_fitness)
 
 		run_for = 1
 		sim_output = self.configuration.kinetic_model.run_simulation(top_phenotype, run_for)

@@ -60,9 +60,7 @@ class KineticFluxModel(object):
 			# initialize transporters' entries
 			for transporter in transporters:
 				if transporter not in parameter_indices[reaction]:
-					parameter_indices[reaction][transporter] = {
-						'kms': {}
-					}
+					parameter_indices[reaction][transporter] = {}
 				if transporter not in transport_configuration:
 					transport_configuration[transporter] = {
 						'partition': [],
@@ -101,7 +99,7 @@ class KineticFluxModel(object):
 				transport_configuration[transporter]['partition'] = partition
 				transport_configuration[transporter]['reaction_cofactors'][reaction] = cofactors
 
-				# partitioned_molecules: the set of molecules requiring kmss
+				# partitioned_molecules: the set of molecules requiring kms
 				partitioned_molecules = set([molecule for part in partition for molecule in part])
 
 				# add each new parameter to parameter_indices and assign a parameter_index
@@ -110,9 +108,10 @@ class KineticFluxModel(object):
 					new_param = False
 
 					# assign same km indices to all reactions that use this same transporter
+					# only need to assign these kms once.
 					for rx in sharing_reactions:
-						if molecule not in parameter_indices[rx][transporter]['kms']:
-							parameter_indices[rx][transporter]['kms'][molecule] = parameter_index
+						if molecule not in parameter_indices[rx][transporter]:
+							parameter_indices[rx][transporter][molecule] = parameter_index
 							new_param = True
 
 					# only increase index if a new param has been assigned
@@ -147,8 +146,9 @@ class KineticFluxModel(object):
 				partition = transport_configuration[transporter]['partition']
 
 				param_idxs = parameter_indices[reaction][transporter]
-				kcat_indices = {param:idx for param, idx in param_idxs.iteritems() if param != 'kms'}
-				km_indices = param_idxs['kms']
+
+				kcat_indices = {param:idx for param, idx in param_idxs.iteritems() if 'kcat' in param}
+				km_indices = {param:idx for param, idx in param_idxs.iteritems() if 'kcat' not in param}
 
 				rate_law = self.generate_rate_law(
 					stoichiometry,

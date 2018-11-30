@@ -34,7 +34,7 @@ class ConfigureEvolution(object):
 			'mutation_variance': config['mutation_variance'],
 			'max_fitness': config['max_fitness'],
 			'diagnose_error': config['diagnose_error'],
-			'initial_parameters': config['initial_parameters'], # TODO -- this can be passed to GA from fitness function.
+			'seed_parameters': config['seed_parameters'], # TODO -- this can be passed to GA from fitness function.
 			'temperature': config['temperature'],
 			'stochastic_acceptance': config['stochastic_acceptance'],
 			}
@@ -66,13 +66,3 @@ class ConfigureEvolution(object):
 
 		new_reactions = {reaction: self.all_reactions[reaction] for reaction in add_reactions}
 		self.reactions.update(new_reactions)
-
-
-	def reconfigure(self, config):
-
-		pass
-
-
-	def map_parameters(self):
-
-		pass
