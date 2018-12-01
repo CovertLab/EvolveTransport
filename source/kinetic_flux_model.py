@@ -129,6 +129,10 @@ class KineticFluxModel(object):
 		return parameter_indices, transport_configuration, parameter_index
 
 	def get_phenotype_summary(self, phenotype):
+		'''
+		makes a dictionary the same structure as self.parameter_indices,
+		but with phenotype parameters instead of indices.
+		'''
 
 		phenotype_summary = {}
 		for reaction, transporters in self.parameter_indices.iteritems():

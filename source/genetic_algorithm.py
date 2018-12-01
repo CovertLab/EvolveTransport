@@ -9,7 +9,7 @@ class GeneticAlgorithm(object):
 
 	'''
 
-	def __init__(self, config, fitness_function, n_generations):
+	def __init__(self, config, fitness_function, n_generations=1000):
 
 		# configuration
 		self.population_size = config.get('population_size', None)
@@ -23,7 +23,7 @@ class GeneticAlgorithm(object):
 		self.stochastic_acceptance = config.get('stochastic_acceptance', False)
 
 		self.seed_parameters = config.get('seed_parameters', None)
-		self.n_generations = n_generations # TODO -- rename this
+		self.n_generations = n_generations
 
 		# fitness function
 		self.fitness_function = fitness_function
@@ -44,7 +44,7 @@ class GeneticAlgorithm(object):
 
 	def initialize_population(self, population_size):
 
-		# fill the population dicitonary with {individual: [parameters]}	for each individual in the population
+		# fill the population dictionary with {individual: [parameters]} for each individual in the population
 		population = {}
 		for ind in xrange(population_size):
 			population[ind] = self.initialize_genome()

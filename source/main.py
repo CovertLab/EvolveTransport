@@ -253,7 +253,7 @@ class Main(object):
 			'parameter_out_dir': data.PARAMOUTDIR,
 			'saved_param_file': data.PARAM_FILE,
 			'parameter_analytics': PARAMETER_ANALYTICS,
-			'mutation_variance': MUTATION_VARIANCE,
+			'mutation_variance': MUTATION_VARIANCE, # TODO -- this should get mutation variance from the evo_config. changes through the stages.
 			'seed': self.seed,
 			'replicate_id': self.replicate_id,
 			'fitness_threshold': SAVE_FITNESS_THRESHOLD,
@@ -267,32 +267,31 @@ class Main(object):
 			1: {
 			'stage_n_gens': 10,
 			'include_reactions': initial_reactions,
+			'stages_seed_results': [],
 			'add_reactions': [],
 			'conditions': CONDITIONS,
 			'mutation_variance': 0.05,
-			'params_from_stages': [],
 			},
 			2: {
 			'stage_n_gens': 10,
 			# 'include_reactions': initial_reactions,
+			'stages_seed_results': [1],
 			'add_reactions': ['RXN0-5202'],
 			'conditions': CONDITIONS,
 			'mutation_variance': 0.001,
-			'params_from_stages': [1],
-
 			},
 		}
 
 		phenotype_summaries = {}
+		all_results = {}
 
 		for stage_id, stage in stages.iteritems():
 
 			self.conditions = stage['conditions']
-			n_gens = stage['stage_n_gens']
+			stage_n_gens = stage['stage_n_gens']
 			add_reactions = stage['add_reactions']
-			params_from_stages = stage['params_from_stages']
+			stages_seed_results = stage['stages_seed_results']
 
-			# import ipdb; ipdb.set_trace()
 			# update reactions
 			include_reactions = self.evo_config['include_reactions']
 			include_reactions.extend(add_reactions)
@@ -300,8 +299,6 @@ class Main(object):
 
 			# update evo_config
 			self.evo_config.update(stage)
-
-
 
 			# initialize seed_parameters
 			seed_parameters = {}
@@ -316,7 +313,7 @@ class Main(object):
 
 			# add parameters from previous stages.
 			stages_parameters = {}
-			for stage in params_from_stages:
+			for stage in stages_seed_results:
 				params = phenotype_summaries[stage]
 				stages_parameters.update(params)
 
@@ -331,7 +328,7 @@ class Main(object):
 
 			# configure evolution and run for 'n_gens' generations
 			self.configuration = ConfigureEvolution(self.evo_config)
-			results = self.configuration.run_evolution(n_gens)
+			results = self.configuration.run_evolution(stage_n_gens)
 
 
 
@@ -348,14 +345,8 @@ class Main(object):
 			top_phenotype_summary = self.configuration.kinetic_model.get_phenotype_summary(top_phenotype)
 			phenotype_summaries[stage_id] = top_phenotype_summary
 
-			# results for this stage
-			final_population = results['final_population']
-			final_fitness = results['final_fitness']
-			saved_error = results['saved_error']
-			saved_fitness = results['saved_fitness']
-			saved_diagnosis = results['saved_diagnosis']
 
-
+			all_results[stage_id] = results
 
 
 		# configure plotting
@@ -364,7 +355,7 @@ class Main(object):
 		self.plot = Visualize(self.visualize_config, self.configuration.fitness_function)
 
 		# Visualization and Analysis
-		self.visualize(final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis)
+		self.visualize(all_results)
 
 
 	def seed_parameters_from_targets(self):
@@ -381,7 +372,16 @@ class Main(object):
 
 
 	# TODO -- this should be in visualize. set with self.visualize_config
-	def visualize(self, final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis):
+	def visualize(self, all_results):
+
+		# TODO -- use all results to run visualize. for evolution in particular
+		results = all_results[1]
+
+		final_population = results['final_population']
+		final_fitness = results['final_fitness']
+		saved_error = results['saved_error']
+		saved_fitness = results['saved_fitness']
+		saved_diagnosis = results['saved_diagnosis']
 
 		self.analyze.parameters(final_population, final_fitness)
 

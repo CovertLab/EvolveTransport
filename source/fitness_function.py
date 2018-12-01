@@ -134,7 +134,9 @@ class FitnessFunction(object):
 			return total_error
 
 	def get_phenotype(self, genotype):
-		# convert all genes to param values using geno_to_pheno function
+		'''
+		convert all genes to param values using geno_to_pheno function
+		'''
 
 		phenotype = np.empty(self.genome_size)
 		for index, gene in enumerate(genotype):
@@ -143,7 +145,9 @@ class FitnessFunction(object):
 		return phenotype
 
 	def make_phenotype_transform(self):
-		# create a list that maps each parameter to an index in the parameter array
+		'''
+		returns a list that maps each parameter to an index in the parameter array
+		'''
 
 		phenotype_transform = [None] * self.genome_size
 
