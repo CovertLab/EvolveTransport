@@ -25,7 +25,7 @@ TIME_STEP = 0.1  # seconds
 
 # genetic algorithm parameters
 POPULATION_SIZE = 100
-MAX_GENERATIONS = 1001
+DEFAULT_N_GENERATIONS = 101
 FITNESS_MAX = 0.999
 NUMBER_ELITIST = 2
 STOCHASTIC_ACCEPTANCE = True
@@ -159,7 +159,6 @@ if TEST_SHARED_TRANSPORTER:
 
 	CONDITIONS = [C1, C2]
 
-
 if TEST_PIPERNO:
 
 	INCLUDE_EXCHANGE = ['GLY[p]']  # ['GLY[p]'] #['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
@@ -237,6 +236,7 @@ class Main(object):
 			'conditions': None, # CONDITIONS, # TODO -- this should be set within the stage.
 
 			# for genetic algorithm config
+			'n_generations': DEFAULT_N_GENERATIONS,
 			'population_size': POPULATION_SIZE,
 			'rank_based': RANK_BASED_SELECTION,
 			'number_elitist': NUMBER_ELITIST,
@@ -265,17 +265,17 @@ class Main(object):
 
 		stages = {
 			1: {
-			'stage_n_gens': 10,
+			'n_generations': 10,
 			'include_reactions': initial_reactions,
-			'stages_seed_results': [],
+			'seed_results_from': [],
 			'add_reactions': [],
 			'conditions': CONDITIONS,
 			'mutation_variance': 0.05,
 			},
 			2: {
-			'stage_n_gens': 10,
+			'n_generations': 50,
 			# 'include_reactions': initial_reactions,
-			'stages_seed_results': [1],
+			'seed_results_from': [1],
 			'add_reactions': ['RXN0-5202'],
 			'conditions': CONDITIONS,
 			'mutation_variance': 0.001,
@@ -288,9 +288,8 @@ class Main(object):
 		for stage_id, stage in stages.iteritems():
 
 			self.conditions = stage['conditions']
-			stage_n_gens = stage['stage_n_gens']
 			add_reactions = stage['add_reactions']
-			stages_seed_results = stage['stages_seed_results']
+			seed_results_from = stage['seed_results_from']
 
 			# update reactions
 			include_reactions = self.evo_config['include_reactions']
@@ -313,39 +312,33 @@ class Main(object):
 
 			# add parameters from previous stages.
 			stages_parameters = {}
-			for stage in stages_seed_results:
+			for stage in seed_results_from:
 				params = phenotype_summaries[stage]
 				stages_parameters.update(params)
 
-			# TODO -- this could overwrite target parameters
+			# TODO -- this could overwrite target parameters. Is this what you want?
 			seed_parameters.update(stages_parameters)
-
 
 			# seed parameters
 			self.evo_config['seed_parameters'] = seed_parameters
 
-
-
-			# configure evolution and run for 'n_gens' generations
+			# configure evolution and run
 			self.configuration = ConfigureEvolution(self.evo_config)
-			results = self.configuration.run_evolution(stage_n_gens)
-
-
-
-
+			results = self.configuration.run_evolution()
 
 
 
 
 
 			# save top phenotype's parameters
+			# TODO -- should be able to save the top N phenotypes, reseed all of them.
 			final_population = results['final_population']
 			final_fitness = results['final_fitness']
 			top_phenotype = self.get_top_phenotype(final_population, final_fitness)
 			top_phenotype_summary = self.configuration.kinetic_model.get_phenotype_summary(top_phenotype)
 			phenotype_summaries[stage_id] = top_phenotype_summary
 
-
+			# save results
 			all_results[stage_id] = results
 
 

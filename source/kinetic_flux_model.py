@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import scipy.constants as constants
 import numpy as np
 
+
 class KineticFluxModel(object):
 	'''
 	Attributes:
@@ -15,7 +16,6 @@ class KineticFluxModel(object):
 	'''
 
 	def __init__(self, config, reactions):
-
 
 		self.time_step = 0.1
 		self.avogadro = constants.Avogadro
@@ -162,8 +162,8 @@ class KineticFluxModel(object):
 
 				param_idxs = parameter_indices[reaction][transporter]
 
-				kcat_indices = {param:idx for param, idx in param_idxs.iteritems() if 'kcat' in param}
-				km_indices = {param:idx for param, idx in param_idxs.iteritems() if 'kcat' not in param}
+				kcat_indices = {param: idx for param, idx in param_idxs.iteritems() if 'kcat' in param}
+				km_indices = {param: idx for param, idx in param_idxs.iteritems() if 'kcat' not in param}
 
 				rate_law = self.generate_rate_law(
 					stoichiometry,

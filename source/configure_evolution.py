@@ -12,7 +12,6 @@ class ConfigureEvolution(object):
 
 	def __init__(self, config):
 
-
 		self.all_reactions = config.get('all_reactions', None)
 		include_reactions = config.get('include_reactions', None)
 
@@ -28,6 +27,7 @@ class ConfigureEvolution(object):
 			}
 
 		self.ga_config = {
+			'n_generations': config['n_generations'],
 			'population_size': config['population_size'],
 			'rank_based': config['rank_based'],
 			'number_elitist': config['number_elitist'],
@@ -45,7 +45,7 @@ class ConfigureEvolution(object):
 
 
 	# def run_evolution(self, condition, n_generations):
-	def run_evolution(self, n_generations):
+	def run_evolution(self):
 
 		# make the kinetic transport model with baseline concentrations
 		self.kinetic_model = KineticFluxModel(self.kinetic_model_config, self.reactions)
@@ -54,7 +54,7 @@ class ConfigureEvolution(object):
 		self.fitness_function = FitnessFunction(self.evaluator_config, self.kinetic_model)
 
 		# configure the genetic algorithm, passing in a fitness function
-		self.genetic_algorithm = GeneticAlgorithm(self.ga_config, self.fitness_function, n_generations)
+		self.genetic_algorithm = GeneticAlgorithm(self.ga_config, self.fitness_function)
 
 		# run the genetic algorithm
 		results = self.genetic_algorithm.evolve()

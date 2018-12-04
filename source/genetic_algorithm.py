@@ -9,7 +9,7 @@ class GeneticAlgorithm(object):
 
 	'''
 
-	def __init__(self, config, fitness_function, n_generations=1000):
+	def __init__(self, config, fitness_function):
 
 		# configuration
 		self.population_size = config.get('population_size', None)
@@ -17,13 +17,13 @@ class GeneticAlgorithm(object):
 		self.number_elitist = config.get('number_elitist', False)
 		self.diagnose_error = config.get('diagnose_error', False)
 		self.mutation_variance = config.get('mutation_variance', 1.0)
-		# self.max_generations = config.get('max_generations', 1000)
+		self.n_generations = config.get('n_generations', 1000)
 		self.max_fitness = config.get('max_fitness', 0.99)
 		self.temperature = config.get('temperature', 1.0)
 		self.stochastic_acceptance = config.get('stochastic_acceptance', False)
 
 		self.seed_parameters = config.get('seed_parameters', None)
-		self.n_generations = n_generations
+		# self.n_generations = n_generations
 
 		# fitness function
 		self.fitness_function = fitness_function
@@ -88,7 +88,10 @@ class GeneticAlgorithm(object):
 			for individual, genome in self.population.iteritems():
 				# TODO -- clean up diagnose_error option
 				if self.diagnose_error:
-					self.total_error[individual], self.diagnosis[individual] = self.fitness_function.evaluate(genome, self.diagnose_error)
+					self.total_error[individual], self.diagnosis[individual] = self.fitness_function.evaluate(
+						genome,
+						self.diagnose_error
+					)
 				else:
 					self.total_error[individual] = self.fitness_function.evaluate(genome)
 
