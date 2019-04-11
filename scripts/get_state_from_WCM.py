@@ -1,6 +1,6 @@
 '''
 
-run this with by passing path to simout:
+run this by passing path to simout:
 python prototypes/aa_transport_estimation/scripts/initial_state_from_WCM.py --simout out/manual/condition_000002/000000/generation_000000/000000/simOut
 
 '''
@@ -8,7 +8,6 @@ python prototypes/aa_transport_estimation/scripts/initial_state_from_WCM.py --si
 import os, cPickle
 import argparse
 import json
-import copy
 
 from wholecell.io.tablereader import TableReader
 
@@ -23,7 +22,6 @@ TIME_STEP = 0.1 # seconds
 ## Initialize the reactions
 # load all reactions from file
 REACTIONS_FILE = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data/aa_transport_reactions.json'))
-# REACTIONS_FILE = os.path.abspath(os.path.join(os.path.dirname( __file__ ), '..', 'data/aa_transport_reactions_reduced.json'))
 
 with open(REACTIONS_FILE, "r") as f:
 	ALL_REACTIONS = json.loads(f.read())

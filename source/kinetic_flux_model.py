@@ -358,6 +358,10 @@ class KineticFluxModel(object):
 				# if substrate is not in concentrations dict
 				if transporter not in concentrations.keys() or concentrations[transporter] is None:
 					transporter_id = [mol_id for mol_id in initial_concentrations.keys() if transporter in mol_id]
+
+
+					# import ipdb; ipdb.set_trace()
+
 					concentrations[transporter] = initial_concentrations[transporter_id[0]]
 
 		return concentrations

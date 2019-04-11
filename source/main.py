@@ -78,11 +78,12 @@ each which has a reaction, molcule, or parameter id as entries.
 '''
 
 # Saved conditions
-TEST_SHARED_TRANSPORTER = False
+TEST_SHARED_TRANSPORTER = True
 TEST_LEUCINE = False
-TEST_PIPERNO = True
+TEST_PIPERNO = False
 
 BASELINE_CONCS = {}
+INCLUDE_EXCHANGE = []
 
 if TEST_LEUCINE:
 
@@ -120,6 +121,7 @@ if TEST_LEUCINE:
 	CONDITIONS = [C1, C2]
 
 if TEST_SHARED_TRANSPORTER:
+
 	initial_reactions = ['RXN0-5202', 'TRANS-RXN-62B']
 
 	BASELINE_CONCS = {
@@ -265,7 +267,7 @@ class Main(object):
 
 		stages = {
 			1: {
-			'n_generations': 10,
+			'n_generations': 50,
 			'include_reactions': initial_reactions,
 			'seed_results_from': [],
 			'add_reactions': [],
@@ -325,10 +327,6 @@ class Main(object):
 			# configure evolution and run
 			self.configuration = ConfigureEvolution(self.evo_config)
 			results = self.configuration.run_evolution()
-
-
-
-
 
 			# save top phenotype's parameters
 			# TODO -- should be able to save the top N phenotypes, reseed all of them.
