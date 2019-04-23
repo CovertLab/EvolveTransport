@@ -296,7 +296,8 @@
             "L-ALPHA-ALANINE[p]": -1,
             "NA+[c]": 1,
             "NA+[p]": -1
-        }
+        },
+        "transporters" : []
     },
     "TRANS-RXN-126": {
         "reversibility": false,
@@ -604,7 +605,8 @@
         "stoichiometry": {
             "L-SELENOCYSTEINE[c]": 1,
             "L-SELENOCYSTEINE[p]": -1
-        }
+        },
+         "transporters": []
     },
     "TRANS-RXN0-517-L-ASPARTATE/PROTON//L-ASPARTATE/PROTON.39.": {
         "reversibility": false,
@@ -613,7 +615,8 @@
             "L-ASPARTATE[p]": -1,
             "PROTON[c]": 2,
             "PROTON[p]": -2
-        }
+        },
+         "transporters": []
     },
     "TRANS-RXN0-537": {
         "reversibility": true,
