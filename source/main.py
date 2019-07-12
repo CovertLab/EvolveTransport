@@ -78,9 +78,9 @@ each which has a reaction, molcule, or parameter id as entries.
 '''
 
 # Saved conditions
-TEST_SHARED_TRANSPORTER = True
+TEST_SHARED_TRANSPORTER = False
 TEST_LEUCINE = False
-TEST_PIPERNO = False
+TEST_PIPERNO = True
 
 BASELINE_CONCS = {}
 INCLUDE_EXCHANGE = []
