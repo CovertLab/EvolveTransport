@@ -15,14 +15,15 @@ class GeneticAlgorithm(object):
 		self.population_size = config.get('population_size', None)
 		self.rank_based = config.get('rank_based', False)
 		self.number_elitist = config.get('number_elitist', False)
-		self.enforce_bounds = config.get('enforce_bounds', True)
 		self.diagnose_error = config.get('diagnose_error', False)
 		self.mutation_variance = config.get('mutation_variance', 1.0)
-		self.max_generations = config.get('max_generations', 1000)
+		self.n_generations = config.get('n_generations', 1000)
 		self.max_fitness = config.get('max_fitness', 0.99)
-		self.initial_parameters = config.get('initial_parameters', None)
 		self.temperature = config.get('temperature', 1.0)
 		self.stochastic_acceptance = config.get('stochastic_acceptance', False)
+
+		self.seed_parameters = config.get('seed_parameters', None)
+		# self.n_generations = n_generations
 
 		# fitness function
 		self.fitness_function = fitness_function
@@ -43,7 +44,7 @@ class GeneticAlgorithm(object):
 
 	def initialize_population(self, population_size):
 
-		# fill the population dicitonary with {individual: [parameters]}	for each individual in the population
+		# fill the population dictionary with {individual: [parameters]} for each individual in the population
 		population = {}
 		for ind in xrange(population_size):
 			population[ind] = self.initialize_genome()
@@ -54,26 +55,22 @@ class GeneticAlgorithm(object):
 
 		genome = np.random.uniform(0, 1, self.genome_size)
 
-		# initialize defined parameters to target value
-		for rxn, target_parameters in self.initial_parameters.iteritems():
-			for parameter, phenotypic_target in target_parameters.iteritems():
-				if phenotypic_target:
+		# set seeded parameters
+		for reaction, seed_tranporters in self.seed_parameters.iteritems():
+			for seed_transporter, seed_parameters in seed_tranporters.iteritems():
 
-					# get index of this phenotypic target by looking up reaction's transporters,
-					# and the parameters associated with them.
-					transporters = self.reactions[rxn]['transporters']
-					for transporter in transporters:
-						param_indices = self.parameter_indices[rxn][transporter]
+				# look up the seeded parameters' indices
+				for transporter, param_indices in self.parameter_indices[reaction].iteritems():
+					for seed_parameter, seed_value in seed_parameters.iteritems():
+						param_idx = param_indices[seed_parameter]
+						gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](seed_value)
 
-						if 'kcat' in parameter:
-							param_idx = param_indices[parameter]
-							gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](phenotypic_target)
+						# is seed within bounds?
+						if (gene_value >= 0) and (gene_value <= 1):
 							genome[param_idx] = gene_value
-
-						else:  # km, uses molecule id as parameter name
-							param_idx = param_indices['kms'][parameter]
-							gene_value = self.fitness_function.phenotype_transform[param_idx]['pheno_to_geno'](phenotypic_target)
-							genome[param_idx] = gene_value
+						else:
+							raise Exception('Seeded parameter out of range: {}'.format(
+								reaction + ', ' + seed_parameter + ' = ' + str(seed_value)))
 		return genome
 
 	def evolve(self):
@@ -82,15 +79,19 @@ class GeneticAlgorithm(object):
 		saved_error = []
 		saved_fitness = []
 		saved_penality_diagnosis = []
+		results = {}
 
 		# genetic algorithm loop
-		while generations < self.max_generations and top_fit < self.max_fitness:
+		while generations < self.n_generations and top_fit < self.max_fitness:
 
 			# evaluate fitness of each individual
 			for individual, genome in self.population.iteritems():
 				# TODO -- clean up diagnose_error option
 				if self.diagnose_error:
-					self.total_error[individual], self.diagnosis[individual] = self.fitness_function.evaluate(genome, self.diagnose_error)
+					self.total_error[individual], self.diagnosis[individual] = self.fitness_function.evaluate(
+						genome,
+						self.diagnose_error
+					)
 				else:
 					self.total_error[individual] = self.fitness_function.evaluate(genome)
 
@@ -126,7 +127,13 @@ class GeneticAlgorithm(object):
 			'mutation_diagnosis': self.saved_mutation_diagnosis,
 		}
 
-		return self.population, self.fitness, saved_error, saved_fitness, saved_diagnosis
+		results['final_population'] = self.population
+		results['final_fitness'] = self.fitness
+		results['saved_error'] = saved_error
+		results['saved_fitness'] = saved_fitness
+		results['saved_diagnosis'] = saved_diagnosis
+
+		return results
 
 	def repopulate(self, population, fitness):
 		'''
@@ -191,12 +198,11 @@ class GeneticAlgorithm(object):
 			new_genome = np.array([x + y for x, y in zip(genome, mutation)])
 
 			# enforce bounds on genome
-			if self.enforce_bounds:
-				# if parameter is not in range, initialize it randomly within range
-				out_of_range = np.where(np.logical_or(new_genome <= 0.0, new_genome >= 1.0))
-				new_genome[out_of_range] = np.random.uniform(0.0, 1.0)
+			# if parameter is not in range, initialize it randomly within range
+			out_of_range = np.where(np.logical_or(new_genome <= 0.0, new_genome >= 1.0))
+			new_genome[out_of_range] = np.random.uniform(0.0, 1.0)
 
-				enforce_bounds = float(len(out_of_range[0])) / len(new_genome)
+			enforce_bounds = float(len(out_of_range[0])) / len(new_genome)
 
 			# genome_fitness
 			new_genome_error = self.fitness_function.evaluate(new_genome)

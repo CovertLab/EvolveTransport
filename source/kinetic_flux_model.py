@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function
 import scipy.constants as constants
 import numpy as np
 
+
 class KineticFluxModel(object):
 	'''
 	Attributes:
@@ -16,10 +17,10 @@ class KineticFluxModel(object):
 
 	def __init__(self, config, reactions):
 
-
 		self.time_step = 0.1
 		self.avogadro = constants.Avogadro
 
+		self.config = config
 		self.km_range = config.get('km_range', None)
 		self.kcat_range = config.get('kcat_range', None)
 		self.wcm_sim_data = config.get('wcm_sim_data', None)
@@ -59,9 +60,7 @@ class KineticFluxModel(object):
 			# initialize transporters' entries
 			for transporter in transporters:
 				if transporter not in parameter_indices[reaction]:
-					parameter_indices[reaction][transporter] = {
-						'kms': {}
-					}
+					parameter_indices[reaction][transporter] = {}
 				if transporter not in transport_configuration:
 					transport_configuration[transporter] = {
 						'partition': [],
@@ -100,7 +99,7 @@ class KineticFluxModel(object):
 				transport_configuration[transporter]['partition'] = partition
 				transport_configuration[transporter]['reaction_cofactors'][reaction] = cofactors
 
-				# partitioned_molecules: the set of molecules requiring kmss
+				# partitioned_molecules: the set of molecules requiring kms
 				partitioned_molecules = set([molecule for part in partition for molecule in part])
 
 				# add each new parameter to parameter_indices and assign a parameter_index
@@ -109,9 +108,10 @@ class KineticFluxModel(object):
 					new_param = False
 
 					# assign same km indices to all reactions that use this same transporter
+					# only need to assign these kms once.
 					for rx in sharing_reactions:
-						if molecule not in parameter_indices[rx][transporter]['kms']:
-							parameter_indices[rx][transporter]['kms'][molecule] = parameter_index
+						if molecule not in parameter_indices[rx][transporter]:
+							parameter_indices[rx][transporter][molecule] = parameter_index
 							new_param = True
 
 					# only increase index if a new param has been assigned
@@ -128,6 +128,21 @@ class KineticFluxModel(object):
 
 		return parameter_indices, transport_configuration, parameter_index
 
+	def get_phenotype_summary(self, phenotype):
+		'''
+		makes a dictionary the same structure as self.parameter_indices,
+		but with phenotype parameters instead of indices.
+		'''
+
+		phenotype_summary = {}
+		for reaction, transporters in self.parameter_indices.iteritems():
+			phenotype_summary[reaction] = {}
+			for transporter, param_indices in transporters.iteritems():
+				phenotype_summary[reaction][transporter] = {
+					param_id: phenotype[idx] for param_id, idx in param_indices.iteritems()
+				}
+
+		return phenotype_summary
 
 	# Make rate laws
 	def make_rate_laws(self, reactions, transport_configuration, parameter_indices):
@@ -146,8 +161,9 @@ class KineticFluxModel(object):
 				partition = transport_configuration[transporter]['partition']
 
 				param_idxs = parameter_indices[reaction][transporter]
-				kcat_indices = {param:idx for param, idx in param_idxs.iteritems() if param != 'kms'}
-				km_indices = param_idxs['kms']
+
+				kcat_indices = {param: idx for param, idx in param_idxs.iteritems() if 'kcat' in param}
+				km_indices = {param: idx for param, idx in param_idxs.iteritems() if 'kcat' not in param}
 
 				rate_law = self.generate_rate_law(
 					stoichiometry,
@@ -342,6 +358,10 @@ class KineticFluxModel(object):
 				# if substrate is not in concentrations dict
 				if transporter not in concentrations.keys() or concentrations[transporter] is None:
 					transporter_id = [mol_id for mol_id in initial_concentrations.keys() if transporter in mol_id]
+
+
+					# import ipdb; ipdb.set_trace()
+
 					concentrations[transporter] = initial_concentrations[transporter_id[0]]
 
 		return concentrations

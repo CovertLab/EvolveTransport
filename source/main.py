@@ -1,21 +1,17 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import json
 import datetime
 
 import numpy as np
 
-from source.kinetic_flux_model import KineticFluxModel
-from source.evaluation import FitnessFunction
-from source.genetic_algorithm import GeneticAlgorithm
+from source.configure_evolution import ConfigureEvolution
+from source.analyze import Analyze
 from source.visualize import Visualize
-
 from source import data
 
 
 # options
-ENFORCE_BOUNDS = True
 PARAMETER_ANALYTICS = False
 RANK_BASED_SELECTION = False
 DIAGNOSE_ERROR = True
@@ -23,21 +19,20 @@ DIAGNOSE_ERROR = True
 # threshold for saving successful parameters
 SAVE_FITNESS_THRESHOLD = 0.95
 
-
 # simulation parameters
 TIME_TOTAL = 1.0  # seconds
 TIME_STEP = 0.1  # seconds
 
 # genetic algorithm parameters
 POPULATION_SIZE = 100
-MAX_GENERATIONS = 101
+DEFAULT_N_GENERATIONS = 101
 FITNESS_MAX = 0.999
 NUMBER_ELITIST = 2
-STOCHASTIC_ACCEPTANCE = False
+STOCHASTIC_ACCEPTANCE = True
 
 # for staging
 ACCEPTANCE_TEMPERATURE = 0.3
-MUTATION_VARIANCE = 0.1  # 0.001 # 0.1 # TODO -- make this default, and allow adjustable mutation variance in conditions
+MUTATION_VARIANCE = 0.005  # 0.001 # 0.1 # TODO -- make this default, and adjust mutation variance in conditions
 
 
 def reactions_from_exchange(include_exchanges):
@@ -52,16 +47,17 @@ def reactions_from_exchange(include_exchanges):
 
 	return include_reactions
 
+
 # set allowable parameter ranges
 # A concentration of one molecule per E. coli cell is roughly 1 nM (1e-9 M),
 # while water, the most abundant species, has a concentration of about 50 M.
 PARAM_RANGES = {
 	'km': [
-		1e-6,  # 1e-9,  # units in M
+		1e-9,  # 1e-9,  # units in M
 		1e-1    # 1e1 units in M
 	],
 	'kcat': [
-		1e-1,  # 1e-2 gives average kcat of about 100 w/ upper kcat of 1e6
+		1e-2,  # 1e-2 gives average kcat of about 100 w/ upper kcat of 1e6
 		1e5    # 1e5 catalase is around 1e5/s
 	],
 	}
@@ -82,16 +78,17 @@ each which has a reaction, molcule, or parameter id as entries.
 '''
 
 # Saved conditions
-TEST_SHARED_TRANSPORTER = False
+TEST_SHARED_TRANSPORTER = True
 TEST_LEUCINE = False
-TEST_PIPERNO = True
+TEST_PIPERNO = False
 
 BASELINE_CONCS = {}
+INCLUDE_EXCHANGE = []
 
 if TEST_LEUCINE:
 
 	INCLUDE_EXCHANGE = ['LEU[p]']  # Piperno data: ['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
-	INCLUDE_REACTIONS = reactions_from_exchange(INCLUDE_EXCHANGE)
+	initial_reactions = reactions_from_exchange(INCLUDE_EXCHANGE)
 
 	C1 = {
 		'initial_concentrations': {
@@ -124,7 +121,8 @@ if TEST_LEUCINE:
 	CONDITIONS = [C1, C2]
 
 if TEST_SHARED_TRANSPORTER:
-	include_reactions = ['RXN0-5202', 'TRANS-RXN-62B']
+
+	initial_reactions = ['RXN0-5202', 'TRANS-RXN-62B']
 
 	BASELINE_CONCS = {
 		'PROTON[p]': 1e-2,
@@ -163,11 +161,14 @@ if TEST_SHARED_TRANSPORTER:
 
 	CONDITIONS = [C1, C2]
 
-
 if TEST_PIPERNO:
 
-	INCLUDE_EXCHANGE = ['GLY[p]']  # , 'ILE[p]', 'MET[p]'] #, 'ILE[p]', 'MET[p]', 'PHE[p]'] #['GLY[p]'] #['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
-	INCLUDE_REACTIONS = reactions_from_exchange(INCLUDE_EXCHANGE)
+	INCLUDE_EXCHANGE = ['GLY[p]']  # ['GLY[p]'] #['GLY[p]', 'ILE[p]', 'MET[p]', 'PHE[p]']
+	initial_reactions = reactions_from_exchange(INCLUDE_EXCHANGE)
+
+	BASELINE_CONCS = {
+		'PROTON[p]': 1e-2,
+		}
 
 	# make conditions from data
 	CONDITIONS = []
@@ -186,8 +187,12 @@ if TEST_PIPERNO:
 					# 'CPLX0 - 7654' : 0.0, # turn off 'TRANS-RXN0-537' by setting transporter concentration to 0
 				},
 				'targets': {
-					'exchange_fluxes': {flux_id: - target_flux,}, # need negative flux, because uptake removes from [p]
-					# 'parameters': {'TRANS-RXN-62B': {'kcat': 1e-2, 'km': 1e-2}, }, # low kcat to turn off rxn
+					'exchange_fluxes': {flux_id: - target_flux},  # need negative flux, because uptake removes from [p]
+					'parameters': {
+						'TRANS-RXN0-537': {
+							'CPLX0-7654': {'kcat_f': 1e-2, 'GLY[p]': 1e-2}, # low kcat to turn off rxn
+						},
+					}
 				},
 				'penalties': {
 					'exchange_fluxes': 1,#1e6,
@@ -196,118 +201,192 @@ if TEST_PIPERNO:
 
 			CONDITIONS.append(condition)
 
-# CONDITIONS = [data.SET_CONDITIONS['C3']]
-# CONDITIONS = [data.SET_CONDITIONS['C1'], data.SET_CONDITIONS['C2']]
 
-# get parameters initialization values from targets, if not included here they are set to random.
-INITIAL_PARAMETERS = {}
-for condition in CONDITIONS:
-	if 'parameters' in condition['targets']:
-		params = condition['targets']['parameters']
-		INITIAL_PARAMETERS.update(params)
+# # get parameters initialization values from targets, if not included here they are set to random.
+# INITIAL_PARAMETERS = {}
+# for condition in CONDITIONS:
+# 	if 'parameters' in condition['targets']:
+# 		params = condition['targets']['parameters']
+# 		INITIAL_PARAMETERS.update(params)
 
 
-class TransportEstimation(object):
+
+class Main(object):
 
 	def __init__(self):
 
-		# set random seed to make search deterministic
+		# set random seed.
+		# seed at a constant to repeat searches
 		self.seed = np.random.randint(2 ** 32 - 1)
 		print('seed = ' + str(self.seed))
-		np.random.seed(1)
+		np.random.seed(self.seed)
 
-		# replicate id is used to name outputs of this replicate
+		# replicate id for naming output figures
 		self.replicate_id = self.get_replicate_id()
 
-		self.kinetic_model_config = {
+		self.evo_config = {
+			'all_reactions': data.ALL_REACTIONS,
+			'include_reactions': [],
+
+			# for kinetic model config
 			'km_range': PARAM_RANGES['km'],
 			'kcat_range': PARAM_RANGES['kcat'],
 			'wcm_sim_data': data.wcm_sim_out,
 			'set_baseline': BASELINE_CONCS,
-			}
 
-		self.evaluator_config = {
-			'conditions': CONDITIONS,
-			}
+			# for fitness function config
+			'conditions': None, # CONDITIONS, # TODO -- this should be set within the stage.
 
-		self.ga_config = {
+			# for genetic algorithm config
+			'n_generations': DEFAULT_N_GENERATIONS,
 			'population_size': POPULATION_SIZE,
 			'rank_based': RANK_BASED_SELECTION,
 			'number_elitist': NUMBER_ELITIST,
-			'enforce_bounds': ENFORCE_BOUNDS,
 			'mutation_variance': MUTATION_VARIANCE,
-			'max_generations': MAX_GENERATIONS,
 			'max_fitness': FITNESS_MAX,
 			'diagnose_error': DIAGNOSE_ERROR,
-			'initial_parameters': INITIAL_PARAMETERS,
+			'seed_parameters': None,
 			'temperature': ACCEPTANCE_TEMPERATURE,
 			'stochastic_acceptance': STOCHASTIC_ACCEPTANCE,
-			}
+		}
 
-		self.plot_config = {
+		self.visualize_config = {
 			'out_dir': data.PLOTOUTDIR,
 			'parameter_out_dir': data.PARAMOUTDIR,
 			'saved_param_file': data.PARAM_FILE,
 			'parameter_analytics': PARAMETER_ANALYTICS,
-			'mutation_variance': MUTATION_VARIANCE,
+			'mutation_variance': MUTATION_VARIANCE, # TODO -- this should get mutation variance from the evo_config. changes through the stages.
 			'seed': self.seed,
 			'replicate_id': self.replicate_id,
 			'fitness_threshold': SAVE_FITNESS_THRESHOLD,
 			'exchange_molecules': INCLUDE_EXCHANGE,
-			'wcm_sim_data': data.wcm_sim_out, # is this needed? initial concentrations are available in the kinetic model
+			'wcm_sim_data': data.wcm_sim_out, # TODO -- initial concentrations are already available in the kinetic model
 			}
 
-
 	def main(self):
-		# TODO -- staging should be done here.
-		# allow passing state between stages, seed population in new GA
-		# new reaction definitions based on conditions. new parameter indices.
-		# for stage in STAGES:
 
+		stages = {
+			1: {
+			'n_generations': 50,
+			'include_reactions': initial_reactions,
+			'seed_results_from': [],
+			'add_reactions': [],
+			'conditions': CONDITIONS,
+			'mutation_variance': 0.05,
+			},
+			2: {
+			'n_generations': 50,
+			# 'include_reactions': initial_reactions,
+			'seed_results_from': [1],
+			'add_reactions': ['RXN0-5202'],
+			'conditions': CONDITIONS,
+			'mutation_variance': 0.001,
+			},
+		}
 
+		phenotype_summaries = {}
+		all_results = {}
 
+		for stage_id, stage in stages.iteritems():
 
+			self.conditions = stage['conditions']
+			add_reactions = stage['add_reactions']
+			seed_results_from = stage['seed_results_from']
 
+			# update reactions
+			include_reactions = self.evo_config['include_reactions']
+			include_reactions.extend(add_reactions)
+			self.evo_config['include_reactions'] = include_reactions
 
-		# initialize reactions
-		self.reactions = {reaction: data.ALL_REACTIONS[reaction] for reaction in INCLUDE_REACTIONS}
+			# update evo_config
+			self.evo_config.update(stage)
 
-		self.conditions = CONDITIONS
+			# initialize seed_parameters
+			seed_parameters = {}
 
-		# make the kinetic transport model with baseline concentrations
-		self.kinetic_model = KineticFluxModel(self.kinetic_model_config, self.reactions)
+			# add target parameters
+			target_parameters = {}
+			for condition in stage['conditions']:
+				if 'parameters' in condition['targets']:
+					params = condition['targets']['parameters']
+					target_parameters.update(params)
+			seed_parameters.update(target_parameters)
 
-		# configure the fitness function, passing in the kinetic model
-		self.fitness_function = FitnessFunction(self.evaluator_config, self.kinetic_model)
+			# add parameters from previous stages.
+			stages_parameters = {}
+			for stage in seed_results_from:
+				params = phenotype_summaries[stage]
+				stages_parameters.update(params)
 
-		# configure the genetic algorithm, passing in a fitness function
-		self.genetic_algorithm = GeneticAlgorithm(self.ga_config, self.fitness_function)
+			# TODO -- this could overwrite target parameters. Is this what you want?
+			seed_parameters.update(stages_parameters)
+
+			# seed parameters
+			self.evo_config['seed_parameters'] = seed_parameters
+
+			# configure evolution and run
+			self.configuration = ConfigureEvolution(self.evo_config)
+			results = self.configuration.run_evolution()
+
+			# save top phenotype's parameters
+			# TODO -- should be able to save the top N phenotypes, reseed all of them.
+			final_population = results['final_population']
+			final_fitness = results['final_fitness']
+			top_phenotype = self.get_top_phenotype(final_population, final_fitness)
+			top_phenotype_summary = self.configuration.kinetic_model.get_phenotype_summary(top_phenotype)
+			phenotype_summaries[stage_id] = top_phenotype_summary
+
+			# save results
+			all_results[stage_id] = results
+
 
 		# configure plotting
-		self.plot = Visualize(self.plot_config, self.fitness_function) ## TODO -- should this use kinetic_model instead of fitness_function?
-
-		# run the genetic algorithm
-		final_population, final_fitness, saved_error, saved_fitness, saved_diagnosis = self.genetic_algorithm.evolve()
-
+		## TODO -- should this use kinetic_model instead of fitness_function?
+		self.analyze = Analyze(self.visualize_config, self.configuration.fitness_function)
+		self.plot = Visualize(self.visualize_config, self.configuration.fitness_function)
 
 		# Visualization and Analysis
-		# TODO -- make a separate analysis class
-		self.plot.parameter_analysis(final_population, final_fitness)
+		self.visualize(all_results)
+
+
+	def seed_parameters_from_targets(self):
+
+		pass
+
+
+	def get_top_phenotype(self, population, fitness):
+		top_index = fitness.values().index(max(fitness.values()))
+		top_genotype = population[top_index]
+		top_phenotype = self.configuration.fitness_function.get_phenotype(top_genotype)
+
+		return top_phenotype
+
+
+	# TODO -- this should be in visualize. set with self.visualize_config
+	def visualize(self, all_results):
+
+		# TODO -- use all results to run visualize. for evolution in particular
+		results = all_results[1]
+
+		final_population = results['final_population']
+		final_fitness = results['final_fitness']
+		saved_error = results['saved_error']
+		saved_fitness = results['saved_fitness']
+		saved_diagnosis = results['saved_diagnosis']
+
+		self.analyze.parameters(final_population, final_fitness)
 
 		self.plot.evolution(saved_error, saved_fitness, saved_diagnosis)
 
-		# get best individual's parameters and simulate it
-		top_index = final_fitness.values().index(max(final_fitness.values()))
-		top_genotype = final_population[top_index]
-		top_phenotype = self.fitness_function.get_phenotype(top_genotype)
+		# simulate the best individual
+		top_phenotype = self.get_top_phenotype(final_population, final_fitness)
 
 		run_for = 1
-		sim_output = self.kinetic_model.run_simulation(top_phenotype, run_for)
+		sim_output = self.configuration.kinetic_model.run_simulation(top_phenotype, run_for)
 
 		# plot simulation of best individual
 		self.plot.sim_out(sim_output, top_phenotype, self.conditions) # TODO -- why does sim_out care about conditions?
 
-		# # TODO -- make parameter plot of conditions, rather parameters in sim_out
 		# plot best individual across all conditions
 		self.plot.conditions(top_phenotype, self.conditions)
 
@@ -336,20 +415,5 @@ class TransportEstimation(object):
 		return replicate_id
 
 
-	# def reactions_from_exchange(self, include_exchanges):
-	#
-	# 	include_reactions = []
-	# 	for reaction_id, specs in data.ALL_REACTIONS.iteritems():
-	# 		reaction_molecules = specs['stoichiometry'].keys()
-	#
-	# 		for exchange in include_exchanges:
-	# 			if exchange in reaction_molecules:
-	# 				# add the reaction
-	# 				include_reactions.append(reaction_id)
-	#
-	# 	return include_reactions
-
-
-
 if __name__ == '__main__':
-	TransportEstimation().main()
+	Main().main()

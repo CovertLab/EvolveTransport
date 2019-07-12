@@ -49,7 +49,6 @@ class FitnessFunction(object):
 
 			error_terms = {term: 0.0 for term, value in penalties.iteritems()}
 			# concentration error
-			# TODO -- logarithmic penalty for flux and concentration! But what if values == 0?
 			if 'concentrations' in penalties:
 				for molecule, target_conc in targets['concentrations'].iteritems():
 
@@ -91,8 +90,7 @@ class FitnessFunction(object):
 					for param_id, parameter_target in parameters.iteritems():
 						if parameter_target:
 
-							import ipdb
-							ipdb.set_trace()
+							import ipdb; ipdb.set_trace()
 							# TODO -- make sure param_indices points correctly
 							index = self.parameter_indices[rxn][param_id]
 							# parameter_value = phenotype[index]
@@ -136,7 +134,9 @@ class FitnessFunction(object):
 			return total_error
 
 	def get_phenotype(self, genotype):
-		# convert all genes to param values using geno_to_pheno function
+		'''
+		convert all genes to param values using geno_to_pheno function
+		'''
 
 		phenotype = np.empty(self.genome_size)
 		for index, gene in enumerate(genotype):
@@ -145,45 +145,33 @@ class FitnessFunction(object):
 		return phenotype
 
 	def make_phenotype_transform(self):
-		# create a list that maps each parameter to an index in the parameter array
+		'''
+		returns a list that maps each parameter to an index in the parameter array
+		'''
 
 		phenotype_transform = [None] * self.genome_size
 
 		for reaction, transporters in self.parameter_indices.iteritems():
 			for transporter, params in transporters.iteritems():
-				for param_type, indices in params.iteritems():
+				for param_id, param_idx in params.iteritems():
 
+					# kcats
+					if 'kcat'  in param_id:
+						bounds = self.kcat_range
 					# kms
-					if param_type is 'kms':
+					else:
 						bounds = self.km_range
 
-						for param, idx in indices.iteritems():
-							g_to_p = self.make_genotype_to_phenotype(bounds[0], bounds[1])
-							p_to_g = self.make_phenotype_to_genotype(bounds[0], bounds[1])
+					g_to_p = self.make_genotype_to_phenotype(bounds[0], bounds[1])
+					p_to_g = self.make_phenotype_to_genotype(bounds[0], bounds[1])
 
-							mapping = {
-								'bounds': bounds,
-								'geno_to_pheno': g_to_p,
-								'pheno_to_geno': p_to_g,
-							}
+					mapping = {
+						'bounds': bounds,
+						'geno_to_pheno': g_to_p,
+						'pheno_to_geno': p_to_g,
+					}
 
-							phenotype_transform[idx] = mapping
-
-					# kcats (one at a time)
-					else:
-						bounds = self.kcat_range
-
-						# for param, idx in indices.iteritems():
-						g_to_p = self.make_genotype_to_phenotype(bounds[0], bounds[1])
-						p_to_g = self.make_phenotype_to_genotype(bounds[0], bounds[1])
-
-						mapping = {
-							'bounds': bounds,
-							'geno_to_pheno': g_to_p,
-							'pheno_to_geno': p_to_g,
-						}
-
-						phenotype_transform[indices] = mapping
+					phenotype_transform[param_idx] = mapping
 
 		return phenotype_transform
 
